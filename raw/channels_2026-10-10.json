@@ -1,0 +1,526 @@
+{
+  "kind": "youtube#channelListResponse",
+  "etag": "plSMTNf0tAJm-_N3-GDOndhj26F",
+  "pageInfo": {
+    "totalResults": 12,
+    "resultsPerPage": 50
+  },
+  "items": [
+    {
+      "kind": "youtube#channel",
+      "etag": "5S7NDB0yoBaFUTr7KccExL9fUH2",
+      "id": "UCXuqSBlHAE6Xw-yeJA0Tunw",
+      "snippet": {
+        "title": "Linus Tech Tips",
+        "description": "Official YouTube channel of Linus Tech Tips.",
+        "customUrl": "@linustechtips",
+        "publishedAt": "2012-10-04T15:55:16Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw/hqdefault.jpg"
+          }
+        },
+        "country": "CA"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUXuqSBlHAE6Xw-yeJA0Tunw"
+        }
+      },
+      "statistics": {
+        "viewCount": "4346298257",
+        "subscriberCount": "16045036",
+        "hiddenSubscriberCount": false,
+        "videoCount": "1107"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Tech"
+        ]
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "XDf4fEV9eOZtdvXEGEUA9Zsc7VU",
+      "id": "UCBJycsmduvYEL83-oldO34A",
+      "snippet": {
+        "title": "Marques Brownlee",
+        "description": "Official YouTube channel of Marques Brownlee.",
+        "customUrl": "@marquesbrownlee",
+        "publishedAt": "2017-10-08T22:55:54Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UCBJycsmduvYEL83-oldO34A/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UCBJycsmduvYEL83-oldO34A/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UCBJycsmduvYEL83-oldO34A/hqdefault.jpg"
+          }
+        },
+        "country": "US"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUBJycsmduvYEL83-oldO34A"
+        }
+      },
+      "statistics": {
+        "viewCount": "4425723551",
+        "subscriberCount": "8182501",
+        "hiddenSubscriberCount": false,
+        "videoCount": "1313"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Tech"
+        ]
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "qOLKQsVbFieYqNrqVM6VQxlYplH",
+      "id": "UCY1kMZp36IQSyNx_9h4mpCg",
+      "snippet": {
+        "title": "Mark Rober",
+        "description": "Official YouTube channel of Mark Rober.",
+        "customUrl": "@markrober",
+        "publishedAt": "2014-08-04T17:58:22Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UCY1kMZp36IQSyNx_9h4mpCg/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UCY1kMZp36IQSyNx_9h4mpCg/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UCY1kMZp36IQSyNx_9h4mpCg/hqdefault.jpg"
+          }
+        },
+        "country": "US"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUY1kMZp36IQSyNx_9h4mpCg"
+        }
+      },
+      "statistics": {
+        "viewCount": "2885002242",
+        "subscriberCount": "7056872",
+        "hiddenSubscriberCount": false,
+        "videoCount": "1425"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Tech"
+        ]
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "vfj7jF-XpCOnUwPWhkztVWIyTEj",
+      "id": "UCsXVk37bltHxD1rDPwtNM8Q",
+      "snippet": {
+        "title": "Kurzgesagt – In a Nutshell",
+        "description": "Official YouTube channel of Kurzgesagt – In a Nutshell.",
+        "customUrl": "@kurzgesagtinanutshell",
+        "publishedAt": "2005-07-25T14:49:02Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UCsXVk37bltHxD1rDPwtNM8Q/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UCsXVk37bltHxD1rDPwtNM8Q/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UCsXVk37bltHxD1rDPwtNM8Q/hqdefault.jpg"
+          }
+        },
+        "country": "DE"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUsXVk37bltHxD1rDPwtNM8Q"
+        }
+      },
+      "statistics": {
+        "viewCount": "1583907499",
+        "subscriberCount": "8570141",
+        "hiddenSubscriberCount": false,
+        "videoCount": "162"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Education"
+        ]
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "a7CR9Rc6O9B62vrgPzXVULmvSlJ",
+      "id": "UCsooa4yRKGN_zEE8iknghZA",
+      "snippet": {
+        "title": "TED-Ed",
+        "description": "Official YouTube channel of TED-Ed.",
+        "customUrl": "@ted-ed",
+        "publishedAt": "2012-05-25T08:16:57Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UCsooa4yRKGN_zEE8iknghZA/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UCsooa4yRKGN_zEE8iknghZA/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UCsooa4yRKGN_zEE8iknghZA/hqdefault.jpg"
+          }
+        },
+        "country": "US"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUsooa4yRKGN_zEE8iknghZA"
+        }
+      },
+      "statistics": {
+        "viewCount": "2104954637",
+        "subscriberCount": "1713310",
+        "hiddenSubscriberCount": false,
+        "videoCount": "915"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Education"
+        ]
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "aeAHRwUqcNdM5nMh9fMyWPZlhls",
+      "id": "UCX6b17PVsYBQ0ip5gyeme-Q",
+      "snippet": {
+        "title": "CrashCourse",
+        "description": "Official YouTube channel of CrashCourse.",
+        "customUrl": "@crashcourse",
+        "publishedAt": "2016-06-12T15:29:10Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UCX6b17PVsYBQ0ip5gyeme-Q/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UCX6b17PVsYBQ0ip5gyeme-Q/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UCX6b17PVsYBQ0ip5gyeme-Q/hqdefault.jpg"
+          }
+        },
+        "country": "US"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUX6b17PVsYBQ0ip5gyeme-Q"
+        }
+      },
+      "statistics": {
+        "viewCount": "3180618510",
+        "subscriberCount": "8876398",
+        "hiddenSubscriberCount": false,
+        "videoCount": "1012"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Education"
+        ]
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "7O7rB5XukeXyvd9qCF7NlFjXnP6",
+      "id": "UCIPPMRA040LQr5QPyJEbmXA",
+      "snippet": {
+        "title": "MrBeast Gaming",
+        "description": "Official YouTube channel of MrBeast Gaming.",
+        "customUrl": "@mrbeastgaming",
+        "publishedAt": "2016-03-28T01:35:40Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UCIPPMRA040LQr5QPyJEbmXA/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UCIPPMRA040LQr5QPyJEbmXA/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UCIPPMRA040LQr5QPyJEbmXA/hqdefault.jpg"
+          }
+        },
+        "country": "US"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUIPPMRA040LQr5QPyJEbmXA"
+        }
+      },
+      "statistics": {
+        "viewCount": "3856891918",
+        "subscriberCount": "16499087",
+        "hiddenSubscriberCount": false,
+        "videoCount": "505"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Gaming"
+        ]
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "qceUXbFPacyjvzaTXEzUZeoySXh",
+      "id": "UCddiUEpeqJcYeBxX1IVBKvQ",
+      "snippet": {
+        "title": "Markiplier",
+        "description": "Official YouTube channel of Markiplier.",
+        "customUrl": "@markiplier",
+        "publishedAt": "2017-03-04T08:13:42Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UCddiUEpeqJcYeBxX1IVBKvQ/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UCddiUEpeqJcYeBxX1IVBKvQ/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UCddiUEpeqJcYeBxX1IVBKvQ/hqdefault.jpg"
+          }
+        },
+        "country": "US"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUddiUEpeqJcYeBxX1IVBKvQ"
+        }
+      },
+      "statistics": {
+        "viewCount": "4509579817",
+        "subscriberCount": "4439069",
+        "hiddenSubscriberCount": false,
+        "videoCount": "1034"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Gaming"
+        ]
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "7wRzO9fI9fDXPlcymS5OwfOVimU",
+      "id": "UCYzPXprvl5Y-Sf0g4vX-m6g",
+      "snippet": {
+        "title": "Jacksepticeye",
+        "description": "Official YouTube channel of Jacksepticeye.",
+        "customUrl": "@jacksepticeye",
+        "publishedAt": "2014-02-09T06:19:44Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UCYzPXprvl5Y-Sf0g4vX-m6g/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UCYzPXprvl5Y-Sf0g4vX-m6g/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UCYzPXprvl5Y-Sf0g4vX-m6g/hqdefault.jpg"
+          }
+        },
+        "country": "IE"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUYzPXprvl5Y-Sf0g4vX-m6g"
+        }
+      },
+      "statistics": {
+        "viewCount": "3327299458",
+        "subscriberCount": "4073386",
+        "hiddenSubscriberCount": false,
+        "videoCount": "420"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Gaming"
+        ]
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "pyYPF9Z9bvvUznPH83IVoeVFb6N",
+      "id": "UCq-Fj5jknLsUf-MWSy4_brA",
+      "snippet": {
+        "title": "T-Series",
+        "description": "Official YouTube channel of T-Series.",
+        "customUrl": "@t-series",
+        "publishedAt": "2015-02-02T10:25:52Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UCq-Fj5jknLsUf-MWSy4_brA/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UCq-Fj5jknLsUf-MWSy4_brA/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UCq-Fj5jknLsUf-MWSy4_brA/hqdefault.jpg"
+          }
+        },
+        "country": "IN"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUq-Fj5jknLsUf-MWSy4_brA"
+        }
+      },
+      "statistics": {
+        "viewCount": "1898618089",
+        "subscriberCount": "9707389",
+        "hiddenSubscriberCount": false,
+        "videoCount": "1464"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Music"
+        ]
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "SildtYDkL0gFZoZBZ_Ru_Ki1YWL",
+      "id": "UCiGm_E4ZwYSHV3bcW1pnmPg",
+      "snippet": {
+        "title": "Billie Eilish",
+        "description": "Official YouTube channel of Billie Eilish.",
+        "customUrl": "@billieeilish",
+        "publishedAt": "2009-02-16T23:26:41Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UCiGm_E4ZwYSHV3bcW1pnmPg/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UCiGm_E4ZwYSHV3bcW1pnmPg/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UCiGm_E4ZwYSHV3bcW1pnmPg/hqdefault.jpg"
+          }
+        },
+        "country": "US"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUiGm_E4ZwYSHV3bcW1pnmPg"
+        }
+      },
+      "statistics": {
+        "viewCount": "1274755918",
+        "subscriberCount": "1538784",
+        "hiddenSubscriberCount": false,
+        "videoCount": "772"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Music"
+        ]
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "erWkxkpLiYOyk4fa7TLsSYEijrC",
+      "id": "UC20vb-R_px4CguHzzBPhoyQ",
+      "snippet": {
+        "title": "Eminem",
+        "description": "Official YouTube channel of Eminem.",
+        "customUrl": "@eminem",
+        "publishedAt": "2010-09-16T17:56:34Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/channel/UC20vb-R_px4CguHzzBPhoyQ/default.jpg"
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/channel/UC20vb-R_px4CguHzzBPhoyQ/mqdefault.jpg"
+          },
+          "high": {
+            "url": "https://i.ytimg.com/channel/UC20vb-R_px4CguHzzBPhoyQ/hqdefault.jpg"
+          }
+        },
+        "country": "US"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UU20vb-R_px4CguHzzBPhoyQ"
+        }
+      },
+      "statistics": {
+        "viewCount": "1987377462",
+        "subscriberCount": "9061841",
+        "hiddenSubscriberCount": false,
+        "videoCount": "1404"
+      },
+      "topicDetails": {
+        "topicIds": [
+          "/m/07c1v"
+        ],
+        "topicCategories": [
+          "https://en.wikipedia.org/wiki/Music"
+        ]
+      }
+    }
+  ]
+}
