@@ -76,9 +76,10 @@ def _now_utc() -> str:
 
 
 def _add_metadata(df: pd.DataFrame, source_file: str, load_ts: str) -> pd.DataFrame:
-    """Append load_timestamp and source_file columns to every staging frame."""
+    """Append load_timestamp, source_name, and source_file columns to every staging frame."""
     df = df.copy()
     df["load_timestamp"] = load_ts
+    df["source_name"]    = source_file
     df["source_file"]    = source_file
     return df
 
@@ -124,7 +125,7 @@ def _load_raw(resource_type: str, date_str: str) -> tuple[dict, str]:
 # Flatten functions  (one per staging table)
 # ══════════════════════════════════════════════════════════════════════════════
 
-def flatten_channels(data: dict, source_file: str, load_ts: str) -> pd.DataFrame:
+def flatten_channels(data: dict, source_file: str, load_ts: str, snapshot_date: str = "") -> pd.DataFrame:
     """
     Flatten channels ListResponse items → stg_channels.
 
@@ -151,11 +152,14 @@ def flatten_channels(data: dict, source_file: str, load_ts: str) -> pd.DataFrame
             )
 
     df = _add_metadata(df, source_file, load_ts)
+    if not snapshot_date and "channels_" in source_file:
+        snapshot_date = source_file.replace("channels_", "").replace(".json", "")
+    df["snapshot_date"] = snapshot_date
     log.info("  stg_channels        : %d rows  (%d columns)", len(df), len(df.columns))
     return df
 
 
-def flatten_playlist_items(data: dict, source_file: str, load_ts: str) -> pd.DataFrame:
+def flatten_playlist_items(data: dict, source_file: str, load_ts: str, snapshot_date: str = "") -> pd.DataFrame:
     """
     Flatten playlistItems ListResponse items → stg_playlist_items.
 
@@ -168,11 +172,14 @@ def flatten_playlist_items(data: dict, source_file: str, load_ts: str) -> pd.Dat
     items = data.get("items", [])
     df    = _safe_normalize(items)
     df    = _add_metadata(df, source_file, load_ts)
+    if not snapshot_date and "playlist_items_" in source_file:
+        snapshot_date = source_file.replace("playlist_items_", "").replace(".json", "")
+    df["snapshot_date"] = snapshot_date
     log.info("  stg_playlist_items  : %d rows  (%d columns)", len(df), len(df.columns))
     return df
 
 
-def flatten_videos(data: dict, source_file: str, load_ts: str) -> pd.DataFrame:
+def flatten_videos(data: dict, source_file: str, load_ts: str, snapshot_date: str = "") -> pd.DataFrame:
     """
     Flatten videos ListResponse items → stg_videos.
 
@@ -206,11 +213,14 @@ def flatten_videos(data: dict, source_file: str, load_ts: str) -> pd.DataFrame:
         )
 
     df = _add_metadata(df, source_file, load_ts)
+    if not snapshot_date and "videos_" in source_file:
+        snapshot_date = source_file.replace("videos_", "").replace(".json", "")
+    df["snapshot_date"] = snapshot_date
     log.info("  stg_videos          : %d rows  (%d columns)", len(df), len(df.columns))
     return df
 
 
-def flatten_video_snapshots(data: dict, source_file: str, load_ts: str, snapshot_date: str) -> pd.DataFrame:
+def flatten_video_snapshots(data: dict, source_file: str, load_ts: str, snapshot_date: str = "") -> pd.DataFrame:
     """
     Build stg_video_snapshots – a narrow table of per-day statistics.
 
@@ -220,11 +230,14 @@ def flatten_video_snapshots(data: dict, source_file: str, load_ts: str, snapshot
     Columns:
       video_id, channel_id, snapshot_date,
       view_count, like_count, comment_count, favorite_count,
-      load_timestamp, source_file
+      load_timestamp, source_name, source_file
     """
     items = data.get("items", [])
     if not items:
         return pd.DataFrame()
+
+    if not snapshot_date and "videos_" in source_file:
+        snapshot_date = source_file.replace("videos_", "").replace(".json", "")
 
     rows = []
     for item in items:
@@ -335,20 +348,47 @@ def run(skip_extract: bool = False) -> dict[str, int]:
         extract.run()
 
     # ── Step 2: Load raw JSON ─────────────────────────────────────────────────
-    log.info("Loading raw JSON files for date %s...", today)
-    ch_data,  ch_file  = _load_raw("channels",       today)
+    log.info("Loading raw JSON files for staging...")
+
+    # Load stg_channels from ALL snapshot files in raw/
+    ch_files = sorted(RAW_DIR.glob("channels_*.json"))
+    if not ch_files:
+        ch_data, ch_file = _load_raw("channels", today)
+        ch_files = [RAW_DIR / ch_file]
+
+    df_ch_list = []
+    for cf in ch_files:
+        with cf.open(encoding="utf-8") as fh:
+            c_data = json.load(fh)
+        s_date = cf.stem.replace("channels_", "")
+        df_ch_list.append(flatten_channels(c_data, cf.name, load_ts, snapshot_date=s_date))
+    df_ch = pd.concat(df_ch_list, ignore_index=True) if df_ch_list else pd.DataFrame()
+
+    # Load stg_video_snapshots from ALL snapshot files in raw/
+    vid_files = sorted(RAW_DIR.glob("videos_*.json"))
+    if not vid_files:
+        v_data, v_file = _load_raw("videos", today)
+        vid_files = [RAW_DIR / v_file]
+
+    df_snp_list = []
+    for vf in vid_files:
+        with vf.open(encoding="utf-8") as fh:
+            v_data = json.load(fh)
+        s_date = vf.stem.replace("videos_", "")
+        df_snp_list.append(flatten_video_snapshots(v_data, vf.name, load_ts, snapshot_date=s_date))
+    df_snp = pd.concat(df_snp_list, ignore_index=True) if df_snp_list else pd.DataFrame()
+
+    # Load latest snapshot for playlist_items and videos
     pi_data,  pi_file  = _load_raw("playlist_items", today)
     vid_data, vid_file = _load_raw("videos",          today)
 
-    # Derive snapshot date from the filename (strip type prefix and extension)
-    snapshot_date = vid_file.replace("videos_", "").replace(".json", "")
+    pi_snapshot_date  = pi_file.replace("playlist_items_", "").replace(".json", "")
+    vid_snapshot_date = vid_file.replace("videos_", "").replace(".json", "")
 
-    # ── Step 3: Flatten ───────────────────────────────────────────────────────
-    log.info("Flattening and staging...")
-    df_ch  = flatten_channels(ch_data,  ch_file,  load_ts)
-    df_pi  = flatten_playlist_items(pi_data, pi_file, load_ts)
-    df_vid = flatten_videos(vid_data, vid_file, load_ts)
-    df_snp = flatten_video_snapshots(vid_data, vid_file, load_ts, snapshot_date)
+    # ── Step 3: Flatten playlist_items and videos ─────────────────────────────
+    log.info("Flattening playlist_items and videos...")
+    df_pi  = flatten_playlist_items(pi_data, pi_file, load_ts, snapshot_date=pi_snapshot_date)
+    df_vid = flatten_videos(vid_data, vid_file, load_ts, snapshot_date=vid_snapshot_date)
 
     # ── Step 4: Write to SQLite ───────────────────────────────────────────────
     counts[STG_CHANNELS]        = _write_table(df_ch,  STG_CHANNELS,        engine)

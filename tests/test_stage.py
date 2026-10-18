@@ -62,16 +62,30 @@ def staged_counts(engine):
 @pytest.fixture(scope="session")
 def latest_raw_items() -> dict[str, int]:
     """
-    Load the most-recent raw JSON files and return the item counts
-    for channels, playlist_items, and videos.
+    Load raw JSON files and return item counts.
+    For playlist_items and videos, returns item count of the latest file.
+    For channels and video_snapshots, returns total items across all snapshot files.
     """
     result = {}
-    for rtype in ("channels", "playlist_items", "videos"):
+    for rtype in ("playlist_items", "videos"):
         candidates = sorted(RAW_DIR.glob(f"{rtype}_*.json"), reverse=True)
         assert candidates, f"No raw file found for '{rtype}' in {RAW_DIR}"
         with candidates[0].open(encoding="utf-8") as fh:
             data = json.load(fh)
         result[rtype] = len(data.get("items", []))
+
+    total_ch = 0
+    for f in sorted(RAW_DIR.glob("channels_*.json")):
+        with f.open(encoding="utf-8") as fh:
+            total_ch += len(json.load(fh).get("items", []))
+    result["channels"] = total_ch
+
+    total_snp = 0
+    for f in sorted(RAW_DIR.glob("videos_*.json")):
+        with f.open(encoding="utf-8") as fh:
+            total_snp += len(json.load(fh).get("items", []))
+    result["video_snapshots"] = total_snp
+
     return result
 
 
@@ -98,7 +112,7 @@ def test_table_exists(table_name, engine, staged_counts):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def test_stg_channels_row_count(engine, staged_counts, latest_raw_items):
-    """stg_channels row count must match channels raw item count."""
+    """stg_channels row count must match total channel items across all snapshots."""
     expected = latest_raw_items["channels"]
     with engine.connect() as conn:
         actual = conn.execute(text(f"SELECT COUNT(*) FROM {STG_CHANNELS}")).scalar()
@@ -130,9 +144,9 @@ def test_stg_videos_row_count(engine, staged_counts, latest_raw_items):
 def test_stg_video_snapshots_row_count(engine, staged_counts, latest_raw_items):
     """
     stg_video_snapshots row count must equal the number of video items
-    (one snapshot row per video per run).
+    across all snapshot files in raw/.
     """
-    expected = latest_raw_items["videos"]
+    expected = latest_raw_items["video_snapshots"]
     with engine.connect() as conn:
         actual = conn.execute(text(f"SELECT COUNT(*) FROM {STG_VIDEO_SNAPSHOTS}")).scalar()
     assert actual == expected, (
@@ -146,11 +160,14 @@ def test_stg_video_snapshots_row_count(engine, staged_counts, latest_raw_items):
 
 @pytest.mark.parametrize("table_name", ALL_TABLES)
 def test_metadata_columns_exist(table_name, engine, staged_counts):
-    """Every staging table must have load_timestamp and source_file columns."""
+    """Every staging table must have load_timestamp, source_name, and source_file columns."""
     inspector = inspect(engine)
     columns   = {col["name"] for col in inspector.get_columns(table_name)}
     assert "load_timestamp" in columns, (
         f"'{table_name}' is missing 'load_timestamp'"
+    )
+    assert "source_name" in columns, (
+        f"'{table_name}' is missing 'source_name'"
     )
     assert "source_file" in columns, (
         f"'{table_name}' is missing 'source_file'"
@@ -159,15 +176,19 @@ def test_metadata_columns_exist(table_name, engine, staged_counts):
 
 @pytest.mark.parametrize("table_name", ALL_TABLES)
 def test_metadata_columns_not_null(table_name, engine, staged_counts):
-    """load_timestamp and source_file must not be NULL in any row."""
+    """load_timestamp, source_name, and source_file must not be NULL in any row."""
     with engine.connect() as conn:
         null_ts = conn.execute(
             text(f"SELECT COUNT(*) FROM {table_name} WHERE load_timestamp IS NULL")
+        ).scalar()
+        null_sn = conn.execute(
+            text(f"SELECT COUNT(*) FROM {table_name} WHERE source_name IS NULL")
         ).scalar()
         null_sf = conn.execute(
             text(f"SELECT COUNT(*) FROM {table_name} WHERE source_file IS NULL")
         ).scalar()
     assert null_ts == 0, f"'{table_name}' has {null_ts} NULL load_timestamp values"
+    assert null_sn == 0, f"'{table_name}' has {null_sn} NULL source_name values"
     assert null_sf == 0, f"'{table_name}' has {null_sf} NULL source_file values"
 
 

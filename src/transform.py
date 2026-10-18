@@ -319,7 +319,7 @@ def clean_videos(
     df["title_length"]         = titles.str.len().astype("Int64")
     df["word_count"]           = titles.str.split().str.len().astype("Int64")
     df["has_number_in_title"]  = titles.str.contains(r"\d", regex=True)
-    df["has_question_mark"]    = titles.str.contains(r"\?", regex=False)
+    df["has_question_mark"]    = titles.str.contains("?", regex=False)
 
     # ── Build combined rejects DataFrame ──────────────────────────────────────
     rejects_df = (
@@ -366,6 +366,7 @@ def clean_channels(stg_channels: pd.DataFrame) -> pd.DataFrame:
 def build_dim_date(
     clean_videos: pd.DataFrame,
     stg_video_snapshots: pd.DataFrame,
+    stg_channels: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """
     Build dim_date: a full date spine covering all publish dates + snapshot dates.
@@ -380,20 +381,40 @@ def build_dim_date(
 
     pub_dates = pd.to_datetime(
         clean_videos["published_at_utc"], utc=True, errors="coerce"
-    ).dropna()
+    ).dt.tz_localize(None).dropna()
     all_dates.extend(pub_dates.dt.normalize().unique())
 
     snap_dates = pd.to_datetime(
         stg_video_snapshots["snapshot_date"], errors="coerce"
     ).dropna()
+    if hasattr(snap_dates.dt, "tz_localize"):
+        try:
+            snap_dates = snap_dates.dt.tz_localize(None)
+        except TypeError:
+            pass
     all_dates.extend(snap_dates.dt.normalize().unique())
+
+    if stg_channels is not None and "snapshot_date" in stg_channels.columns:
+        ch_snap_dates = pd.to_datetime(
+            stg_channels["snapshot_date"], errors="coerce"
+        ).dropna()
+        if hasattr(ch_snap_dates.dt, "tz_localize"):
+            try:
+                ch_snap_dates = ch_snap_dates.dt.tz_localize(None)
+            except TypeError:
+                pass
+        all_dates.extend(ch_snap_dates.dt.normalize().unique())
 
     if not all_dates:
         log.warning("dim_date: no dates found, returning empty DataFrame")
         return pd.DataFrame()
 
-    min_date = min(all_dates).replace(tzinfo=None)
-    max_date = max(all_dates).replace(tzinfo=None)
+    min_date = min(all_dates)
+    if hasattr(min_date, "tzinfo") and min_date.tzinfo is not None:
+        min_date = min_date.replace(tzinfo=None)
+    max_date = max(all_dates)
+    if hasattr(max_date, "tzinfo") and max_date.tzinfo is not None:
+        max_date = max_date.replace(tzinfo=None)
 
     spine = pd.date_range(start=min_date, end=max_date, freq="D")
     df = pd.DataFrame({"full_date": spine})
@@ -588,8 +609,8 @@ def build_fact_video_stats(
 
     # channel_key
     df = df.merge(
-        dim_channel[["channel_key", "channel_id"]].rename(columns={"channel_id": "id"}),
-        on="id", how="left",
+        dim_channel[["channel_key", "channel_id"]].rename(columns={"channel_id": "snippet__channelId"}),
+        on="snippet__channelId", how="left",
     )
 
     # category_key (snippet__categoryId as str)
@@ -624,60 +645,50 @@ def build_fact_channel_daily(
     dim_date:            pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Build fact_channel_daily – one row per (channel, snapshot_date).
-
-    Aggregates snapshot-level metrics from stg_video_snapshots and joins
-    stg_channels for subscriber counts.
+    Build fact_channel_daily – one row per channel_key per date_key across all snapshots.
+    Composite primary key is (channel_key, date_key).
 
     Columns
     -------
-    channel_key, date_key, subscriber_count, total_views, video_count
+    channel_key, date_key, subscribers, total_views, video_count
     """
-    snaps = stg_video_snapshots.copy()
+    ch = stg_channels.copy()
+    ch = ch.rename(columns={"id": "channel_id"})
 
-    # Cast to Int64 where needed
-    snaps["view_count"] = _safe_int(snaps["view_count"])
-
-    # Aggregate: sum views per channel per snapshot_date, count videos
-    agg = (
-        snaps.groupby(["channel_id", "snapshot_date"], as_index=False)
-        .agg(
-            total_views=("view_count",  "sum"),
-            video_count=("video_id",    "nunique"),
-        )
-    )
-
-    # Pull subscriber_count from the single stg_channels snapshot
-    ch_stats = stg_channels[["id", "statistics__subscriberCount"]].copy()
-    ch_stats = ch_stats.rename(columns={
-        "id":                           "channel_id",
-        "statistics__subscriberCount":  "subscriber_count_str",
-    })
-    ch_stats["subscriber_count"] = _safe_int(ch_stats["subscriber_count_str"])
-    ch_stats = ch_stats[["channel_id", "subscriber_count"]]
-
-    agg = agg.merge(ch_stats, on="channel_id", how="left")
+    ch["subscribers"] = _safe_int(ch["statistics__subscriberCount"])
+    ch["total_views"] = _safe_int(ch["statistics__viewCount"])
+    ch["video_count"] = _safe_int(ch["statistics__videoCount"])
+    ch["subscriber_count"] = ch["subscribers"]
+    ch["snapshot_views"]   = ch["total_views"]
 
     # date_key
-    agg["date_key"] = (
-        pd.to_datetime(agg["snapshot_date"], errors="coerce")
+    ch["date_key"] = (
+        pd.to_datetime(ch["snapshot_date"], errors="coerce")
         .dt.strftime("%Y%m%d")
         .astype("Int64")
     )
 
     # channel_key
-    agg = agg.merge(
+    ch = ch.merge(
         dim_channel[["channel_key", "channel_id"]],
-        on="channel_id", how="left",
+        on="channel_id", how="inner",
     )
 
-    fact = agg[[
+    fact = ch[[
         "channel_key",
         "date_key",
-        "subscriber_count",
+        "subscribers",
         "total_views",
         "video_count",
+        "subscriber_count",
+        "snapshot_views",
     ]].copy()
+
+    fact = (
+        fact.drop_duplicates(subset=["channel_key", "date_key"])
+        .sort_values(by=["channel_key", "date_key"])
+        .reset_index(drop=True)
+    )
 
     log.info("fact_channel_daily: %d rows", len(fact))
     return fact
@@ -710,7 +721,7 @@ def run() -> dict[str, pd.DataFrame]:
     clean_ch            = clean_channels(stg_ch)
 
     # ── 3. Dimensions ─────────────────────────────────────────────────────────
-    dim_date     = build_dim_date(clean_vid, stg_snp)
+    dim_date     = build_dim_date(clean_vid, stg_snp, stg_ch)
     dim_time     = build_dim_time()
     dim_channel  = build_dim_channel(clean_ch)
     dim_category = build_dim_category(clean_vid)

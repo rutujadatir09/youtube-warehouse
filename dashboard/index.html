@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Content & Engagement Data Warehouse</title>
+  <!-- Chart.js UMD pinned version for file:// compatibility -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #0b0f19;
+      --bg-surface: #151e32;
+      --bg-surface-hover: #1b2640;
+      --border-subtle: #222f4c;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-primary: #38bdf8;
+      --accent-secondary: #818cf8;
+      --accent-emerald: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-rose: #fb7185;
+      --accent-purple: #c084fc;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1360px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .title-group h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-group p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin-top: 4px;
+    }
+
+    .badge-digital {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.15));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent-primary);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent-primary);
+    }
+
+    .kpi-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .kpi-subtext {
+      font-size: 0.75rem;
+      color: var(--accent-emerald);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Charts Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .chart-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-card.full-width {
+      grid-column: span 2;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .chart-title {
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .chart-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .canvas-container {
+      position: relative;
+      height: 320px;
+      width: 100%;
+    }
+
+    .chart-card.full-width .canvas-container {
+      height: 350px;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+      .chart-card.full-width {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title-group">
+        <h1>
+          <span>YouTube Warehouse Analytics</span>
+          <span class="badge-digital">Digital World DWBI</span>
+        </h1>
+        <p>Streaming Platform Content & Engagement Warehouse • Daily Snapshots & Metadata NLP</p>
+      </div>
+      <div>
+        <span style="font-size:0.75rem; color:var(--text-muted);">Source: SQLite warehouse.db (Star Schema)</span>
+      </div>
+    </header>
+
+    <!-- KPI Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Videos</span>
+        <span class="kpi-value" id="kpi-videos">0</span>
+        <span class="kpi-subtext">Across 4 major digital niches</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Total Views</span>
+        <span class="kpi-value" id="kpi-views">0</span>
+        <span class="kpi-subtext">Cumulative audience reach</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Total Channels</span>
+        <span class="kpi-value" id="kpi-channels">0</span>
+        <span class="kpi-subtext">Tech, Gaming, Education, Music</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Avg Engagement Rate</span>
+        <span class="kpi-value" id="kpi-engagement">0.0%</span>
+        <span class="kpi-subtext">(Likes + Comments) / Views</span>
+      </div>
+    </section>
+
+    <!-- Charts Grid -->
+    <main class="charts-grid">
+      <!-- 1. Subscriber Growth (Line Chart) -->
+      <article class="chart-card full-width">
+        <div class="chart-header">
+          <div>
+            <h2 class="chart-title">Subscriber Growth per Channel</h2>
+            <p class="chart-subtitle">Net new subscribers since day 1</p>
+          </div>
+        </div>
+        <div class="canvas-container">
+          <canvas id="chart-growth"></canvas>
+        </div>
+      </article>
+
+      <!-- 2. Category Performance (Bar Chart) -->
+      <article class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h2 class="chart-title">Average Views by Video Category</h2>
+            <p class="chart-subtitle">Comparing average view counts across official YouTube categories</p>
+          </div>
+        </div>
+        <div class="canvas-container">
+          <canvas id="chart-category"></canvas>
+        </div>
+      </article>
+
+      <!-- 3. Duration vs Engagement (Scatter Plot) -->
+      <article class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h2 class="chart-title">Video Duration (Minutes) vs Engagement Rate</h2>
+            <p class="chart-subtitle">Analyzing whether short, medium, or long form content drives higher interaction ratio</p>
+          </div>
+        </div>
+        <div class="canvas-container">
+          <canvas id="chart-scatter"></canvas>
+        </div>
+      </article>
+
+      <!-- 4. Title Analysis: Numbers vs Questions (Bar Chart) -->
+      <article class="chart-card full-width">
+        <div class="chart-header">
+          <div>
+            <h2 class="chart-title">Title Pattern Impact on Average Views</h2>
+            <p class="chart-subtitle">Average view comparison for titles with digits/numbers vs without, and questions (?) vs without</p>
+          </div>
+        </div>
+        <div class="canvas-container">
+          <canvas id="chart-titles"></canvas>
+        </div>
+      </article>
+    </main>
+  </div>
+
+  <!-- Embedded Data & Chart Rendering -->
+  <script>
+    const DATA = {"kpis": {"total_videos": 478, "total_views": 7977758528, "total_channels": 12, "avg_engagement_rate": 6.73}, "subscriber_trends": {"labels": ["2026-10-10", "2026-10-11", "2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"], "channels": [{"name": "Billie Eilish", "values": [0, 19111, 38222, 57333, 76444, 95555, 114666]}, {"name": "CrashCourse", "values": [0, 7611, 15222, 22833, 30444, 38055, 45666]}, {"name": "Eminem", "values": [0, 14111, 28222, 42333, 56444, 70555, 84666]}, {"name": "Jacksepticeye", "values": [0, 9111, 18222, 27333, 36444, 45555, 54666]}, {"name": "Kurzgesagt \u2013 In a Nutshell", "values": [0, 22111, 44222, 66333, 88444, 110555, 132666]}, {"name": "Linus Tech Tips", "values": [0, 8611, 17222, 25833, 34444, 43055, 51666]}, {"name": "Mark Rober", "values": [0, 85111, 170222, 255333, 340444, 425555, 510666]}, {"name": "Markiplier", "values": [0, 11111, 22222, 33333, 44444, 55555, 66666]}, {"name": "Marques Brownlee", "values": [0, 12111, 24222, 36333, 48444, 60555, 72666]}, {"name": "MrBeast Gaming", "values": [0, 115111, 230222, 345333, 460444, 575555, 690666]}, {"name": "T-Series", "values": [0, 70111, 140222, 210333, 280444, 350555, 420666]}, {"name": "TED-Ed", "values": [0, 16111, 32222, 48333, 64444, 80555, 96666]}]}, "category_stats": {"labels": ["Music", "Entertainment", "Gaming", "Education", "Science & Technology", "People & Blogs"], "avg_views": [28349594, 21241800, 16348541, 12056283, 11061976, 9476404], "counts": [70, 112, 58, 102, 93, 43]}, "scatter_data": [{"x": 0.8, "y": 9.16, "title": "Vocal Harmonization and Microtonal Tunin...", "category": "Music", "views": 29722369}, {"x": 0.8, "y": 9.06, "title": "Why 95% of Deep Oceanic Trenches Remain ...", "category": "Science & Technology", "views": 4543360}, {"x": 0.8, "y": 8.92, "title": "Understanding Central Bank Monetary Poli...", "category": "People & Blogs", "views": 4261370}, {"x": 0.8, "y": 7.47, "title": "Mastering Movement Mechanics and Crossha...", "category": "Gaming", "views": 15332319}, {"x": 0.9, "y": 11.04, "title": "Is This the Greatest Recorded Guitar Sol...", "category": "Music", "views": 43543950}, {"x": 1.0, "y": 8.35, "title": "What If Earth Stopped Orbiting the Sun f...", "category": "Science & Technology", "views": 4338496}, {"x": 1.0, "y": 10.47, "title": "We Tried Writing a Chart Topping Pop Son...", "category": "Music", "views": 25941490}, {"x": 1.0, "y": 10.89, "title": "Understanding Central Bank Monetary Poli...", "category": "People & Blogs", "views": 11861201}, {"x": 1.1, "y": 0.97, "title": "Is This the Greatest Recorded Guitar Sol...", "category": "Entertainment", "views": 36724269}, {"x": 1.1, "y": 9.95, "title": "Exploring Modal Jazz Improvisation and M...", "category": "Music", "views": 20016707}, {"x": 1.1, "y": 9.99, "title": "Will Quantum Computing Break All Modern ...", "category": "Education", "views": 13167053}, {"x": 1.1, "y": 1.17, "title": "5 Cognitive Biases That Affect Every Dec...", "category": "Science & Technology", "views": 5697659}, {"x": 1.2, "y": 9.21, "title": "Will Quantum Computing Break All Modern ...", "category": "Education", "views": 4808403}, {"x": 1.2, "y": 9.93, "title": "Why Do We Dream When We Sleep?", "category": "Science & Technology", "views": 15842858}, {"x": 1.2, "y": 8.53, "title": "How 1 Small Mutation Created Human Civil...", "category": "Education", "views": 3611952}, {"x": 1.3, "y": 9.83, "title": "Is Perfect Pitch a Natural Gift or a Tra...", "category": "Music", "views": 24370827}, {"x": 1.3, "y": 9.86, "title": "Comparative Linguistics and the Origin o...", "category": "People & Blogs", "views": 3029864}, {"x": 1.3, "y": 9.44, "title": "How Procedural Generation Redefined Mode...", "category": "Gaming", "views": 11452791}, {"x": 1.3, "y": 8.01, "title": "Quantum Superposition and the Measuremen...", "category": "Education", "views": 9198665}, {"x": 1.3, "y": 8.39, "title": "Why Do We Feel Nostalgia for Times We Ne...", "category": "People & Blogs", "views": 11746714}, {"x": 1.4, "y": 0.95, "title": "Surviving Against 100 Hunters in an Endl...", "category": "Entertainment", "views": 13773676}, {"x": 1.4, "y": 8.4, "title": "I Spent 50 Straight Hours Mining for Rar...", "category": "Entertainment", "views": 15336788}, {"x": 1.4, "y": 9.86, "title": "What Made Classic Game Audio Design So U...", "category": "Entertainment", "views": 6321556}, {"x": 1.4, "y": 1.29, "title": "Can You Beat Minecraft Without Ever Jump...", "category": "Entertainment", "views": 19476716}, {"x": 1.6, "y": 11.2, "title": "I Replaced My Entire Laptop Workflow wit...", "category": "Education", "views": 4825016}, {"x": 1.6, "y": 9.63, "title": "Comparative Linguistics and the Origin o...", "category": "Education", "views": 6017945}, {"x": 1.6, "y": 9.3, "title": "How 1 Player Singlehandedly Saved an Aba...", "category": "Entertainment", "views": 15649501}, {"x": 1.6, "y": 9.87, "title": "Surviving Against 100 Hunters in an Endl...", "category": "Gaming", "views": 8435923}, {"x": 1.6, "y": 9.36, "title": "6 Secret Vocal Effects Behind Iconic Voc...", "category": "Music", "views": 14848165}, {"x": 1.6, "y": 1.12, "title": "How 3 Strategic Decisions Shaped the Ent...", "category": "People & Blogs", "views": 13314588}, {"x": 1.6, "y": 7.51, "title": "Surviving Against 100 Hunters in an Endl...", "category": "Gaming", "views": 10069832}, {"x": 1.6, "y": 9.0, "title": "Why 99% of Wireless ANC Earbuds Sound th...", "category": "Science & Technology", "views": 6320461}, {"x": 1.7, "y": 10.43, "title": "Is Vintage 80s Analog Synthpop Making a ...", "category": "Music", "views": 17972284}, {"x": 1.7, "y": 7.28, "title": "Is Vintage 80s Analog Synthpop Making a ...", "category": "Music", "views": 25206362}, {"x": 1.8, "y": 11.4, "title": "Upgrading My Main Workstation With 64GB ...", "category": "Science & Technology", "views": 4643681}, {"x": 1.8, "y": 9.83, "title": "Comparative Linguistics and the Origin o...", "category": "Education", "views": 8864280}, {"x": 1.9, "y": 10.48, "title": "I Replaced My Entire Laptop Workflow wit...", "category": "Education", "views": 8098670}, {"x": 1.9, "y": 9.13, "title": "I Spent 50 Straight Hours Mining for Rar...", "category": "Entertainment", "views": 8765969}, {"x": 1.9, "y": 8.01, "title": "What Made Classic Game Audio Design So U...", "category": "Gaming", "views": 17235337}, {"x": 1.9, "y": 1.06, "title": "Is Cloud Gaming Dead in 2026?", "category": "Education", "views": 10361226}, {"x": 1.9, "y": 1.2, "title": "How Modern Microprocessors Handle Dynami...", "category": "Education", "views": 11113051}, {"x": 1.9, "y": 9.12, "title": "Why 95% of Deep Oceanic Trenches Remain ...", "category": "People & Blogs", "views": 10730308}, {"x": 1.9, "y": 10.85, "title": "Vocal Harmonization and Microtonal Tunin...", "category": "Music", "views": 13506516}, {"x": 1.9, "y": 8.27, "title": "Upgrading My Main Workstation With 64GB ...", "category": "Education", "views": 13874115}, {"x": 2.0, "y": 1.0, "title": "I Replaced My Entire Laptop Workflow wit...", "category": "Education", "views": 8884425}, {"x": 2.0, "y": 9.41, "title": "How Procedural Generation Redefined Mode...", "category": "Gaming", "views": 12929485}, {"x": 2.0, "y": 9.16, "title": "The 4 Best Level Design Decisions in Pla...", "category": "Gaming", "views": 17583891}, {"x": 2.0, "y": 10.02, "title": "Live From the Royal Albert Hall \u2013 Full O...", "category": "Entertainment", "views": 27155966}, {"x": 2.0, "y": 8.42, "title": "Quantum Superposition and the Measuremen...", "category": "Science & Technology", "views": 8565437}, {"x": 2.1, "y": 8.17, "title": "5 Timeless Guitar Pedals That Every Musi...", "category": "Music", "views": 18600239}, {"x": 2.1, "y": 9.58, "title": "Is Cloud Gaming Dead in 2026?", "category": "Education", "views": 6317009}, {"x": 2.1, "y": 9.61, "title": "How 1 Player Singlehandedly Saved an Aba...", "category": "Gaming", "views": 9110572}, {"x": 2.1, "y": 9.84, "title": "Ranking All 9 Studio Albums From Absolut...", "category": "Music", "views": 27656335}, {"x": 2.1, "y": 9.57, "title": "Is Vintage 80s Analog Synthpop Making a ...", "category": "Entertainment", "views": 28202831}, {"x": 2.2, "y": 9.45, "title": "What Made Classic Game Audio Design So U...", "category": "Gaming", "views": 5799123}, {"x": 2.2, "y": 10.4, "title": "Upgrading My Main Workstation With 64GB ...", "category": "Education", "views": 12033158}, {"x": 2.2, "y": 10.46, "title": "Building a $5000 Ultimate Clean Desk Set...", "category": "Science & Technology", "views": 12297487}, {"x": 2.3, "y": 11.52, "title": "Understanding Graphics Pipelines and Rea...", "category": "Science & Technology", "views": 10702853}, {"x": 2.3, "y": 10.08, "title": "5 Timeless Guitar Pedals That Every Musi...", "category": "Music", "views": 16518944}, {"x": 2.4, "y": 9.34, "title": "Can You Survive 100 Days in Ultra Hardco...", "category": "Gaming", "views": 9976841}, {"x": 2.4, "y": 9.8, "title": "Vocal Harmonization and Microtonal Tunin...", "category": "Entertainment", "views": 22723082}, {"x": 2.4, "y": 8.81, "title": "The True Cost of Technical Debt in Large...", "category": "Science & Technology", "views": 10870032}, {"x": 2.4, "y": 10.06, "title": "The 4 Best Level Design Decisions in Pla...", "category": "Entertainment", "views": 9279012}, {"x": 2.4, "y": 10.3, "title": "Will Quantum Computing Break All Modern ...", "category": "Science & Technology", "views": 14093588}, {"x": 2.4, "y": 10.29, "title": "Why 95% of Deep Oceanic Trenches Remain ...", "category": "People & Blogs", "views": 9792161}, {"x": 2.5, "y": 10.35, "title": "Why Do We Dream When We Sleep?", "category": "Education", "views": 17738743}, {"x": 2.5, "y": 8.21, "title": "Why 99% of Wireless ANC Earbuds Sound th...", "category": "Science & Technology", "views": 8627962}, {"x": 2.5, "y": 10.95, "title": "We Tried Writing a Chart Topping Pop Son...", "category": "Entertainment", "views": 17514928}, {"x": 2.6, "y": 9.84, "title": "Why Classic Low Poly Graphics Are Making...", "category": "Gaming", "views": 14362045}, {"x": 2.6, "y": 8.42, "title": "Understanding Central Bank Monetary Poli...", "category": "Education", "views": 9722494}, {"x": 2.7, "y": 11.03, "title": "Mastering Movement Mechanics and Crossha...", "category": "Gaming", "views": 7824658}, {"x": 2.7, "y": 9.79, "title": "How Modern Microprocessors Handle Dynami...", "category": "Education", "views": 10622286}, {"x": 2.7, "y": 10.08, "title": "How Procedural Generation Redefined Mode...", "category": "Entertainment", "views": 7027353}, {"x": 2.7, "y": 1.04, "title": "Can You Beat Minecraft Without Ever Jump...", "category": "Entertainment", "views": 32878943}, {"x": 2.7, "y": 8.49, "title": "Mastering Movement Mechanics and Crossha...", "category": "Gaming", "views": 10350681}, {"x": 2.7, "y": 8.4, "title": "What If Earth Stopped Orbiting the Sun f...", "category": "Education", "views": 7901079}, {"x": 2.8, "y": 10.7, "title": "Exploring Modal Jazz Improvisation and M...", "category": "Music", "views": 21080985}, {"x": 2.8, "y": 9.09, "title": "Ranking All 9 Studio Albums From Absolut...", "category": "Music", "views": 29187898}, {"x": 2.8, "y": 8.76, "title": "The True Cost of Technical Debt in Large...", "category": "Education", "views": 7398759}, {"x": 2.8, "y": 8.95, "title": "5 Cognitive Biases That Affect Every Dec...", "category": "People & Blogs", "views": 8649959}, {"x": 2.8, "y": 8.47, "title": "Can You Survive 100 Days in Ultra Hardco...", "category": "Entertainment", "views": 8536436}, {"x": 2.8, "y": 11.16, "title": "How Modern Microprocessors Handle Dynami...", "category": "Education", "views": 13238925}, {"x": 2.9, "y": 10.48, "title": "Is Perfect Pitch a Natural Gift or a Tra...", "category": "Entertainment", "views": 24021860}, {"x": 3.0, "y": 8.82, "title": "What If Earth Stopped Orbiting the Sun f...", "category": "People & Blogs", "views": 7967050}, {"x": 3.0, "y": 9.51, "title": "Is Cloud Gaming Dead in 2026?", "category": "Education", "views": 5671431}, {"x": 3.0, "y": 10.41, "title": "Is This the Best Smartphone of 2026?", "category": "Education", "views": 23977917}, {"x": 3.1, "y": 1.11, "title": "Why Classic Low Poly Graphics Are Making...", "category": "Gaming", "views": 14290929}, {"x": 3.2, "y": 9.26, "title": "How 3 Strategic Decisions Shaped the Ent...", "category": "Science & Technology", "views": 11598410}, {"x": 3.2, "y": 8.82, "title": "Why Classic Low Poly Graphics Are Making...", "category": "Entertainment", "views": 6207255}, {"x": 3.2, "y": 9.04, "title": "6 Secret Vocal Effects Behind Iconic Voc...", "category": "Entertainment", "views": 23833367}, {"x": 3.2, "y": 9.5, "title": "I Spent 50 Straight Hours Mining for Rar...", "category": "Entertainment", "views": 10249520}, {"x": 3.2, "y": 10.28, "title": "Is Perfect Pitch a Natural Gift or a Tra...", "category": "Music", "views": 15152607}, {"x": 3.2, "y": 7.38, "title": "Understanding Graphics Pipelines and Rea...", "category": "Science & Technology", "views": 6486198}, {"x": 3.2, "y": 8.55, "title": "Ranking All 9 Studio Albums From Absolut...", "category": "Music", "views": 28372412}, {"x": 3.2, "y": 7.46, "title": "Live From the Royal Albert Hall \u2013 Full O...", "category": "Music", "views": 22107364}, {"x": 3.3, "y": 8.42, "title": "The 4 Best Level Design Decisions in Pla...", "category": "Gaming", "views": 18294756}, {"x": 3.4, "y": 9.34, "title": "Why Do We Feel Nostalgia for Times We Ne...", "category": "People & Blogs", "views": 11003247}, {"x": 3.4, "y": 9.39, "title": "Why Do We Feel Nostalgia for Times We Ne...", "category": "Education", "views": 8810741}, {"x": 3.4, "y": 12.81, "title": "Is This the Greatest Recorded Guitar Sol...", "category": "Music", "views": 35644918}, {"x": 3.5, "y": 6.82, "title": "How 1 Player Singlehandedly Saved an Aba...", "category": "Entertainment", "views": 10721823}, {"x": 3.5, "y": 8.49, "title": "We Tried Writing a Chart Topping Pop Son...", "category": "Music", "views": 19160818}, {"x": 3.5, "y": 10.52, "title": "How 1 Small Mutation Created Human Civil...", "category": "Science & Technology", "views": 2956605}, {"x": 3.5, "y": 1.12, "title": "Is This the Best Smartphone of 2026?", "category": "Science & Technology", "views": 13787698}, {"x": 3.5, "y": 11.25, "title": "Is This the Best Smartphone of 2026?", "category": "Science & Technology", "views": 17082031}, {"x": 3.5, "y": 9.05, "title": "Why 99% of Wireless ANC Earbuds Sound th...", "category": "Science & Technology", "views": 15169324}, {"x": 3.5, "y": 8.97, "title": "Live From the Royal Albert Hall \u2013 Full O...", "category": "Music", "views": 17635355}, {"x": 3.5, "y": 8.87, "title": "6 Secret Vocal Effects Behind Iconic Voc...", "category": "Entertainment", "views": 16388587}, {"x": 3.5, "y": 8.97, "title": "Can You Beat Minecraft Without Ever Jump...", "category": "Entertainment", "views": 25025187}, {"x": 3.6, "y": 8.13, "title": "The True Cost of Technical Debt in Large...", "category": "Education", "views": 13101734}, {"x": 3.7, "y": 1.01, "title": "Building a $5000 Ultimate Clean Desk Set...", "category": "Science & Technology", "views": 14272915}, {"x": 3.7, "y": 10.65, "title": "Exploring Modal Jazz Improvisation and M...", "category": "Entertainment", "views": 15962639}, {"x": 3.8, "y": 1.26, "title": "5 Cognitive Biases That Affect Every Dec...", "category": "Education", "views": 6861447}, {"x": 3.8, "y": 10.81, "title": "How 1 Small Mutation Created Human Civil...", "category": "People & Blogs", "views": 4634229}, {"x": 3.8, "y": 9.46, "title": "Why Do We Dream When We Sleep?", "category": "Education", "views": 16562203}, {"x": 3.8, "y": 9.56, "title": "Can You Survive 100 Days in Ultra Hardco...", "category": "Entertainment", "views": 12799559}, {"x": 3.8, "y": 10.18, "title": "5 Timeless Guitar Pedals That Every Musi...", "category": "Entertainment", "views": 18728897}, {"x": 4.7, "y": 8.99, "title": "Why Did Everyone Suddenly Stop Playing T...", "category": "Gaming", "views": 33196090}, {"x": 4.7, "y": 7.86, "title": "Can Proper Music Theory Actually Make Yo...", "category": "Entertainment", "views": 42444381}, {"x": 4.8, "y": 8.5, "title": "The Rise and Collapse of Sandbox Surviva...", "category": "Entertainment", "views": 16521561}, {"x": 4.8, "y": 8.48, "title": "Did Developers Intentionally Leave This ...", "category": "Gaming", "views": 15418687}, {"x": 4.9, "y": 9.07, "title": "Deep Dive Into Harmonic Modulation and C...", "category": "Music", "views": 29608250}, {"x": 4.9, "y": 7.65, "title": "Why Did Intel Fall Behind AMD?", "category": "Education", "views": 19930955}, {"x": 4.9, "y": 8.33, "title": "The 3 Essential Synthesizers That Define...", "category": "Music", "views": 26470684}, {"x": 5.0, "y": 10.27, "title": "Top 10 Greatest Live Concert Encores Cau...", "category": "Entertainment", "views": 34886838}, {"x": 5.2, "y": 6.95, "title": "How 2 Producers Created the Most Influen...", "category": "Entertainment", "views": 35460763}, {"x": 5.3, "y": 9.54, "title": "10 Hidden Easter Eggs Developers Thought...", "category": "Entertainment", "views": 21214200}, {"x": 5.3, "y": 9.39, "title": "The Art and Challenge of Writing Compell...", "category": "Gaming", "views": 8750170}, {"x": 5.4, "y": 7.32, "title": "Running 100 Isolated Virtual Machines on...", "category": "Science & Technology", "views": 9749700}, {"x": 5.4, "y": 6.21, "title": "Official Studio Music Video \u2013 Acoustic S...", "category": "Music", "views": 32710774}, {"x": 5.7, "y": 8.58, "title": "We Built a Stealth PC Inside a 500 Dolla...", "category": "Science & Technology", "views": 15547671}, {"x": 5.7, "y": 7.49, "title": "Top 5 Open Source Developer Tools That S...", "category": "Education", "views": 15074203}, {"x": 5.7, "y": 7.23, "title": "What Actually Happens at the Event Horiz...", "category": "Science & Technology", "views": 24696861}, {"x": 5.8, "y": 7.76, "title": "The Engineering Marvel of Modern Semicon...", "category": "Science & Technology", "views": 15922086}, {"x": 6.0, "y": 8.39, "title": "Exploring Forgotten Beta Content and Unu...", "category": "Entertainment", "views": 8326943}, {"x": 6.0, "y": 6.66, "title": "Inside the Precision Engineering of Cust...", "category": "Science & Technology", "views": 7593480}, {"x": 6.1, "y": 8.04, "title": "The 100 Year Mystery of Deep Sea Biolumi...", "category": "Science & Technology", "views": 7571927}, {"x": 6.2, "y": 6.43, "title": "The 3 Essential Synthesizers That Define...", "category": "Music", "views": 39347976}, {"x": 6.2, "y": 7.88, "title": "Why Are Modern Video Games Taking 7 Year...", "category": "Entertainment", "views": 15341508}, {"x": 6.2, "y": 8.63, "title": "Top 10 Most Streamed Tracks in Streaming...", "category": "Music", "views": 36580034}, {"x": 6.3, "y": 6.92, "title": "The Engineering Marvel of Modern Semicon...", "category": "Science & Technology", "views": 8492617}, {"x": 6.3, "y": 5.59, "title": "I Built an Automated Home Server for Und...", "category": "Education", "views": 6954658}, {"x": 6.3, "y": 8.47, "title": "10 Mind Bending Facts About the Scale of...", "category": "Science & Technology", "views": 17231820}, {"x": 6.4, "y": 6.35, "title": "Is This the Most Unfair Boss Fight in So...", "category": "Gaming", "views": 40547171}, {"x": 6.4, "y": 6.59, "title": "Did Developers Intentionally Leave This ...", "category": "Entertainment", "views": 23301996}, {"x": 6.4, "y": 8.56, "title": "The 7 Levels of Python Programming Maste...", "category": "Science & Technology", "views": 8062344}, {"x": 6.4, "y": 6.79, "title": "I Built a Massive Automated Kingdom in U...", "category": "Entertainment", "views": 22009582}, {"x": 6.5, "y": 7.39, "title": "The 500 Year History of the Global Finan...", "category": "People & Blogs", "views": 6804511}, {"x": 6.6, "y": 8.51, "title": "The Rise and Collapse of Sandbox Surviva...", "category": "Gaming", "views": 17563909}, {"x": 6.7, "y": 8.53, "title": "Deconstructing Ambient Soundscapes and S...", "category": "Entertainment", "views": 21931269}, {"x": 6.9, "y": 6.65, "title": "Why Is Time Only Able to Move in One Dir...", "category": "Education", "views": 14203173}, {"x": 6.9, "y": 1.05, "title": "The 3 Biggest Hardware Security Flaws Ev...", "category": "Education", "views": 14031867}, {"x": 7.0, "y": 8.3, "title": "Deconstructing Ambient Soundscapes and S...", "category": "Entertainment", "views": 27938318}, {"x": 7.1, "y": 5.52, "title": "Top 5 Open Source Developer Tools That S...", "category": "Education", "views": 17556737}, {"x": 7.1, "y": 7.87, "title": "What If All Insects Disappeared From Ear...", "category": "People & Blogs", "views": 11195857}, {"x": 7.1, "y": 6.76, "title": "Ranking the Top 8 Most Difficult Piano C...", "category": "Entertainment", "views": 43667635}, {"x": 7.2, "y": 8.18, "title": "7 Production Techniques That Give Vocals...", "category": "Music", "views": 24273997}, {"x": 7.2, "y": 8.5, "title": "Reviewing the Ultimate Wireless Noise Ca...", "category": "Education", "views": 10472809}, {"x": 7.4, "y": 0.74, "title": "Electric Guitar Tone Shaping and Dynamic...", "category": "Music", "views": 19057893}, {"x": 7.6, "y": 6.24, "title": "Ranking the 15 Greatest Soundtracks in V...", "category": "Gaming", "views": 10555703}, {"x": 7.8, "y": 6.76, "title": "How the Renaissance Redefined Global Art...", "category": "Education", "views": 12876740}, {"x": 7.9, "y": 6.53, "title": "Why Did Everyone Suddenly Stop Playing T...", "category": "Entertainment", "views": 39589044}, {"x": 8.0, "y": 6.31, "title": "Can You Recognize These Iconic Songs Fro...", "category": "Music", "views": 49335341}, {"x": 8.2, "y": 6.79, "title": "The Cultural Heritage and Rhythmic Roots...", "category": "Music", "views": 19491028}, {"x": 8.3, "y": 7.85, "title": "I Built a Massive Automated Kingdom in U...", "category": "Gaming", "views": 10871156}, {"x": 8.3, "y": 0.88, "title": "The 5 Most Infamous Video Game Bugs Ever...", "category": "Entertainment", "views": 17553624}, {"x": 8.4, "y": 6.52, "title": "The Top 7 Most Overpowered Weapons in Mu...", "category": "Entertainment", "views": 11238871}, {"x": 8.4, "y": 7.91, "title": "Electric Guitar Tone Shaping and Dynamic...", "category": "Entertainment", "views": 30022755}, {"x": 8.5, "y": 7.37, "title": "The Complete Retrospective on Open World...", "category": "Gaming", "views": 14385945}, {"x": 8.6, "y": 9.02, "title": "3 Natural Catastrophes That Nearly Wiped...", "category": "Education", "views": 16512381}, {"x": 8.7, "y": 7.94, "title": "Ecological Trophic Cascades in Forest Co...", "category": "Science & Technology", "views": 14652746}, {"x": 8.7, "y": 7.71, "title": "The Complete Guide to Modern Computer Ar...", "category": "Science & Technology", "views": 8108907}, {"x": 8.7, "y": 8.3, "title": "Ecological Trophic Cascades in Forest Co...", "category": "People & Blogs", "views": 15875397}, {"x": 8.7, "y": 0.68, "title": "Is This Overlooked Indie Gem the Game of...", "category": "Entertainment", "views": 23178227}, {"x": 8.8, "y": 6.17, "title": "Crafting Memorable Boss Encounters Throu...", "category": "Gaming", "views": 11264030}, {"x": 8.9, "y": 7.52, "title": "7 Unsolved Physics Paradoxes That Confus...", "category": "Education", "views": 12976889}, {"x": 8.9, "y": 0.78, "title": "Top 10 RPG Mechanics That Every Game Sho...", "category": "Entertainment", "views": 13397038}, {"x": 8.9, "y": 8.96, "title": "Top 10 Tech Gadgets You Need to See in 2...", "category": "Science & Technology", "views": 7781873}, {"x": 9.0, "y": 8.1, "title": "Why Did Everyone Suddenly Stop Playing T...", "category": "Gaming", "views": 41501504}, {"x": 9.1, "y": 7.08, "title": "Official Studio Music Video \u2013 Acoustic S...", "category": "Music", "views": 24131850}, {"x": 9.1, "y": 7.15, "title": "Ranking All 12 Final Bosses From Easiest...", "category": "Entertainment", "views": 13630950}, {"x": 9.2, "y": 8.19, "title": "Ranking the Top 8 Most Difficult Piano C...", "category": "Entertainment", "views": 31485478}, {"x": 9.3, "y": 7.14, "title": "Exploring Forgotten Beta Content and Unu...", "category": "Entertainment", "views": 16871033}, {"x": 9.3, "y": 8.38, "title": "Is This Overlooked Indie Gem the Game of...", "category": "Entertainment", "views": 23690254}, {"x": 9.3, "y": 9.94, "title": "Why Does Nobody Write Bridge Sections in...", "category": "Music", "views": 33299436}, {"x": 9.6, "y": 7.78, "title": "5 Critical Coding Mistakes Every Junior ...", "category": "Science & Technology", "views": 14544795}, {"x": 9.6, "y": 6.63, "title": "Analyzing Environmental Storytelling in ...", "category": "Gaming", "views": 21276139}, {"x": 9.7, "y": 8.19, "title": "Ranking All 12 Final Bosses From Easiest...", "category": "Gaming", "views": 19977053}, {"x": 9.7, "y": 5.33, "title": "Mastering Vim and Keyboard Driven Termin...", "category": "Science & Technology", "views": 15097265}, {"x": 9.8, "y": 7.4, "title": "5 Extinct Prehistoric Species Geneticist...", "category": "Science & Technology", "views": 15638312}, {"x": 9.8, "y": 7.75, "title": "Inside the Precision Engineering of Cust...", "category": "Science & Technology", "views": 10535180}, {"x": 9.8, "y": 8.0, "title": "I Built an Automated Home Server for Und...", "category": "Science & Technology", "views": 19604123}, {"x": 9.9, "y": 6.77, "title": "Why Did Vinyl Records Outsell CDs for th...", "category": "Music", "views": 40228747}, {"x": 9.9, "y": 8.17, "title": "I Built a Massive Automated Kingdom in U...", "category": "Gaming", "views": 20503914}, {"x": 10.0, "y": 5.68, "title": "3 Natural Catastrophes That Nearly Wiped...", "category": "Science & Technology", "views": 17645663}, {"x": 10.3, "y": 5.97, "title": "Inside the Precision Engineering of Cust...", "category": "Education", "views": 18015630}, {"x": 10.3, "y": 6.49, "title": "Can an AI Really Build an Operating Syst...", "category": "Science & Technology", "views": 18909371}, {"x": 10.4, "y": 6.16, "title": "Electric Guitar Tone Shaping and Dynamic...", "category": "Music", "views": 21168516}, {"x": 10.4, "y": 7.07, "title": "Can an AI Really Build an Operating Syst...", "category": "Science & Technology", "views": 11745622}, {"x": 10.6, "y": 1.0, "title": "The Art and Challenge of Writing Compell...", "category": "Gaming", "views": 18837788}, {"x": 10.6, "y": 7.21, "title": "The Mathematical Elegance of Prime Numbe...", "category": "Science & Technology", "views": 11976353}, {"x": 10.7, "y": 7.76, "title": "Official Studio Music Video \u2013 Acoustic S...", "category": "Music", "views": 23595218}, {"x": 10.7, "y": 7.41, "title": "The Art of Subtle Foley and Atmospheric ...", "category": "Entertainment", "views": 36623187}, {"x": 10.8, "y": 5.99, "title": "7 Unsolved Physics Paradoxes That Confus...", "category": "Education", "views": 15764260}, {"x": 10.9, "y": 1.09, "title": "The 12 Crucial Turning Points in Biologi...", "category": "People & Blogs", "views": 15845628}, {"x": 10.9, "y": 0.8, "title": "The Art and Challenge of Writing Compell...", "category": "Entertainment", "views": 14298467}, {"x": 10.9, "y": 8.67, "title": "Could Life Exist in the Liquid Oceans of...", "category": "People & Blogs", "views": 6555582}, {"x": 11.0, "y": 8.21, "title": "Top 10 Greatest Live Concert Encores Cau...", "category": "Music", "views": 19495201}, {"x": 11.0, "y": 6.72, "title": "7 Unsolved Physics Paradoxes That Confus...", "category": "People & Blogs", "views": 10408243}, {"x": 11.1, "y": 5.49, "title": "Mastering Audio Compression and Dynamic ...", "category": "Music", "views": 27963885}, {"x": 11.1, "y": 7.69, "title": "Can Proper Music Theory Actually Make Yo...", "category": "Entertainment", "views": 38070001}, {"x": 11.1, "y": 6.79, "title": "Running 100 Isolated Virtual Machines on...", "category": "Education", "views": 10374233}, {"x": 11.1, "y": 8.3, "title": "Is Linux Finally Ready for Mainstream PC...", "category": "Science & Technology", "views": 18811443}, {"x": 11.2, "y": 6.78, "title": "Reviewing the Ultimate Wireless Noise Ca...", "category": "Science & Technology", "views": 9134270}, {"x": 11.2, "y": 5.64, "title": "Ranking the Top 8 Most Difficult Piano C...", "category": "Entertainment", "views": 37903897}, {"x": 11.3, "y": 8.88, "title": "Philosophical Perspectives on Consciousn...", "category": "Education", "views": 4039464}, {"x": 11.3, "y": 5.89, "title": "What If All Insects Disappeared From Ear...", "category": "Education", "views": 5941951}, {"x": 11.4, "y": 8.35, "title": "3 Natural Catastrophes That Nearly Wiped...", "category": "Science & Technology", "views": 5605176}, {"x": 11.4, "y": 6.85, "title": "Top 10 RPG Mechanics That Every Game Sho...", "category": "Gaming", "views": 19979716}, {"x": 11.5, "y": 6.72, "title": "Top 10 Tech Gadgets You Need to See in 2...", "category": "Science & Technology", "views": 16714918}, {"x": 11.5, "y": 8.45, "title": "The 100 Year Mystery of Deep Sea Biolumi...", "category": "Science & Technology", "views": 11002279}, {"x": 11.7, "y": 0.95, "title": "Is This the Most Unfair Boss Fight in So...", "category": "Gaming", "views": 19327600}, {"x": 11.7, "y": 7.41, "title": "Mastering Vim and Keyboard Driven Termin...", "category": "Science & Technology", "views": 12384681}, {"x": 11.8, "y": 8.96, "title": "Why Do Modern Flagships Cost So Much?", "category": "Education", "views": 10053639}, {"x": 11.8, "y": 0.76, "title": "Mastering Audio Compression and Dynamic ...", "category": "Entertainment", "views": 28392899}, {"x": 11.9, "y": 7.88, "title": "Why Did Intel Fall Behind AMD?", "category": "Education", "views": 20385565}, {"x": 11.9, "y": 6.74, "title": "How the Renaissance Redefined Global Art...", "category": "Education", "views": 12633393}, {"x": 11.9, "y": 7.2, "title": "The Cultural Heritage and Rhythmic Roots...", "category": "Music", "views": 40147308}, {"x": 12.0, "y": 7.94, "title": "Crafting Memorable Boss Encounters Throu...", "category": "Entertainment", "views": 13744791}, {"x": 12.0, "y": 7.6, "title": "What If All Insects Disappeared From Ear...", "category": "Education", "views": 8555188}, {"x": 12.0, "y": 8.19, "title": "7 Production Techniques That Give Vocals...", "category": "Entertainment", "views": 34313925}, {"x": 12.1, "y": 7.34, "title": "The 3 Essential Synthesizers That Define...", "category": "Music", "views": 19788917}, {"x": 12.2, "y": 7.74, "title": "The 7 Levels of Python Programming Maste...", "category": "Education", "views": 13288226}, {"x": 12.3, "y": 7.24, "title": "What Actually Happens at the Event Horiz...", "category": "Science & Technology", "views": 8446460}, {"x": 12.4, "y": 7.3, "title": "The 500 Year History of the Global Finan...", "category": "Education", "views": 6527417}, {"x": 12.4, "y": 7.75, "title": "Top 10 Most Streamed Tracks in Streaming...", "category": "Music", "views": 21716595}, {"x": 12.4, "y": 7.27, "title": "Is Linux Finally Ready for Mainstream PC...", "category": "Science & Technology", "views": 19161265}, {"x": 12.4, "y": 7.16, "title": "5 Extinct Prehistoric Species Geneticist...", "category": "People & Blogs", "views": 6869989}, {"x": 12.5, "y": 0.54, "title": "Top 5 Modular Synthesizer Patches That S...", "category": "Entertainment", "views": 21254413}, {"x": 12.6, "y": 8.64, "title": "The Dynamic Geochemical Evolution of Ear...", "category": "Science & Technology", "views": 11858236}, {"x": 12.6, "y": 7.42, "title": "Mastering Vim and Keyboard Driven Termin...", "category": "Science & Technology", "views": 13510957}, {"x": 12.8, "y": 9.18, "title": "Why Did Vinyl Records Outsell CDs for th...", "category": "Entertainment", "views": 19978567}, {"x": 12.8, "y": 0.76, "title": "The 5 Worst Video Game Launch Disasters ...", "category": "Entertainment", "views": 12109374}, {"x": 12.8, "y": 7.02, "title": "Analyzing Environmental Storytelling in ...", "category": "Gaming", "views": 19504416}, {"x": 12.9, "y": 6.7, "title": "The Art of Subtle Foley and Atmospheric ...", "category": "Music", "views": 35832980}, {"x": 12.9, "y": 6.35, "title": "Deconstructing Ambient Soundscapes and S...", "category": "Music", "views": 31286388}, {"x": 12.9, "y": 7.73, "title": "Can Humans Ever Travel Faster Than the S...", "category": "Education", "views": 28538911}, {"x": 13.0, "y": 7.09, "title": "Is This the Most Unfair Boss Fight in So...", "category": "Entertainment", "views": 12814015}, {"x": 13.0, "y": 6.37, "title": "What Actually Happens at the Event Horiz...", "category": "People & Blogs", "views": 12887660}, {"x": 13.1, "y": 8.61, "title": "5 Critical Coding Mistakes Every Junior ...", "category": "Education", "views": 8426274}, {"x": 13.2, "y": 8.84, "title": "The Secret History Behind Iconic Video G...", "category": "Gaming", "views": 21684123}, {"x": 13.3, "y": 6.41, "title": "Is Linux Finally Ready for Mainstream PC...", "category": "Education", "views": 14849304}, {"x": 13.4, "y": 8.7, "title": "Did Developers Intentionally Leave This ...", "category": "Entertainment", "views": 15065137}, {"x": 13.4, "y": 7.12, "title": "6 Optical Illusions That Expose Flaws in...", "category": "People & Blogs", "views": 5910280}, {"x": 13.5, "y": 8.1, "title": "Could Life Exist in the Liquid Oceans of...", "category": "People & Blogs", "views": 9237554}, {"x": 13.6, "y": 7.05, "title": "The 5 Worst Video Game Launch Disasters ...", "category": "Entertainment", "views": 19406720}, {"x": 13.6, "y": 6.94, "title": "Why Does Nobody Write Bridge Sections in...", "category": "Music", "views": 22225913}, {"x": 13.7, "y": 7.78, "title": "Why Do Minor Chords Evoke Such Profound ...", "category": "Music", "views": 37945584}, {"x": 13.8, "y": 7.29, "title": "How 2 Producers Created the Most Influen...", "category": "Music", "views": 35441946}, {"x": 13.8, "y": 7.18, "title": "The 100 Million Dollar Legal Lawsuit Tha...", "category": "Music", "views": 37411304}, {"x": 13.9, "y": 7.5, "title": "We Built a Stealth PC Inside a 500 Dolla...", "category": "Science & Technology", "views": 12189765}, {"x": 13.9, "y": 8.71, "title": "Why Did Vinyl Records Outsell CDs for th...", "category": "Music", "views": 19402917}, {"x": 13.9, "y": 6.98, "title": "Can Humans Ever Travel Faster Than the S...", "category": "Education", "views": 28947338}, {"x": 14.0, "y": 8.35, "title": "The Complete Retrospective on Open World...", "category": "Entertainment", "views": 15425439}, {"x": 14.0, "y": 5.88, "title": "Top 5 Modular Synthesizer Patches That S...", "category": "Entertainment", "views": 44098553}, {"x": 14.2, "y": 7.2, "title": "Top 10 Greatest Live Concert Encores Cau...", "category": "Entertainment", "views": 31705644}, {"x": 14.3, "y": 6.91, "title": "The 12 Crucial Turning Points in Biologi...", "category": "People & Blogs", "views": 4990752}, {"x": 14.3, "y": 6.63, "title": "5 Extinct Prehistoric Species Geneticist...", "category": "Science & Technology", "views": 14849043}, {"x": 14.3, "y": 7.84, "title": "Why Do Modern Flagships Cost So Much?", "category": "Education", "views": 17960324}, {"x": 14.4, "y": 6.46, "title": "The Secret History Behind Iconic Video G...", "category": "Gaming", "views": 10435845}, {"x": 14.4, "y": 6.23, "title": "Top 5 Modular Synthesizer Patches That S...", "category": "Music", "views": 20622764}, {"x": 14.4, "y": 9.51, "title": "The Mathematical Elegance of Prime Numbe...", "category": "Education", "views": 4621407}, {"x": 14.4, "y": 0.87, "title": "Deep Dive Into Harmonic Modulation and C...", "category": "Entertainment", "views": 34515644}, {"x": 14.5, "y": 7.16, "title": "The Art of Subtle Foley and Atmospheric ...", "category": "Music", "views": 36401244}, {"x": 14.6, "y": 6.42, "title": "The Mystery of Dark Matter and Cosmic Ex...", "category": "Education", "views": 14894970}, {"x": 14.6, "y": 7.75, "title": "Analyzing Environmental Storytelling in ...", "category": "Entertainment", "views": 7114722}, {"x": 14.7, "y": 7.96, "title": "5 Critical Coding Mistakes Every Junior ...", "category": "Education", "views": 6648104}, {"x": 14.8, "y": 9.49, "title": "Top 10 Most Streamed Tracks in Streaming...", "category": "Entertainment", "views": 33020031}, {"x": 14.9, "y": 6.0, "title": "Can an AI Really Build an Operating Syst...", "category": "Education", "views": 32572170}, {"x": 14.9, "y": 8.28, "title": "Top 5 Open Source Developer Tools That S...", "category": "Education", "views": 18833704}, {"x": 14.9, "y": 0.87, "title": "How the Renaissance Redefined Global Art...", "category": "Education", "views": 15390779}, {"x": 15.0, "y": 7.33, "title": "The 5 Most Infamous Video Game Bugs Ever...", "category": "Entertainment", "views": 16987379}, {"x": 15.1, "y": 4.21, "title": "7 Production Techniques That Give Vocals...", "category": "Entertainment", "views": 29422780}, {"x": 15.2, "y": 7.63, "title": "The Dynamic Geochemical Evolution of Ear...", "category": "Science & Technology", "views": 15227826}, {"x": 15.2, "y": 7.13, "title": "Ecological Trophic Cascades in Forest Co...", "category": "Science & Technology", "views": 14535586}, {"x": 15.3, "y": 6.61, "title": "The Secret History Behind Iconic Video G...", "category": "Entertainment", "views": 10490812}, {"x": 15.3, "y": 1.18, "title": "The 7 Levels of Python Programming Maste...", "category": "Science & Technology", "views": 10988364}, {"x": 15.3, "y": 1.0, "title": "The 100 Million Dollar Legal Lawsuit Tha...", "category": "Music", "views": 29587437}, {"x": 15.4, "y": 8.16, "title": "The Mystery of Dark Matter and Cosmic Ex...", "category": "People & Blogs", "views": 3893827}, {"x": 15.5, "y": 0.8, "title": "We Built a Stealth PC Inside a 500 Dolla...", "category": "Education", "views": 6667363}, {"x": 15.5, "y": 6.2, "title": "The Engineering Marvel of Modern Semicon...", "category": "Science & Technology", "views": 6513504}, {"x": 15.7, "y": 7.36, "title": "The Complete Retrospective on Open World...", "category": "Gaming", "views": 17395733}, {"x": 15.7, "y": 9.76, "title": "Plate Tectonics and the Formation of Sup...", "category": "People & Blogs", "views": 10761810}, {"x": 15.7, "y": 5.75, "title": "The 500 Year History of the Global Finan...", "category": "Education", "views": 13244726}, {"x": 15.7, "y": 5.97, "title": "The Mystery of Dark Matter and Cosmic Ex...", "category": "Education", "views": 9196989}, {"x": 15.8, "y": 6.01, "title": "Why Do Modern Flagships Cost So Much?", "category": "Education", "views": 14712672}, {"x": 15.8, "y": 6.97, "title": "Why Did Intel Fall Behind AMD?", "category": "Education", "views": 15520300}, {"x": 15.9, "y": 6.95, "title": "The Cultural Heritage and Rhythmic Roots...", "category": "Music", "views": 24506425}, {"x": 15.9, "y": 5.84, "title": "The Rise and Collapse of Sandbox Surviva...", "category": "Gaming", "views": 11188577}, {"x": 15.9, "y": 9.45, "title": "The Mathematical Elegance of Prime Numbe...", "category": "Education", "views": 14276352}, {"x": 16.0, "y": 0.86, "title": "The 12 Crucial Turning Points in Biologi...", "category": "Education", "views": 10979465}, {"x": 16.2, "y": 7.39, "title": "Can You Recognize These Iconic Songs Fro...", "category": "Music", "views": 72775210}, {"x": 16.3, "y": 6.96, "title": "Top 10 RPG Mechanics That Every Game Sho...", "category": "Entertainment", "views": 11568612}, {"x": 16.4, "y": 6.74, "title": "Reviewing the Ultimate Wireless Noise Ca...", "category": "Education", "views": 11036632}, {"x": 16.4, "y": 8.42, "title": "Can Proper Music Theory Actually Make Yo...", "category": "Music", "views": 40896947}, {"x": 16.5, "y": 7.78, "title": "The 100 Million Dollar Legal Lawsuit Tha...", "category": "Music", "views": 24266657}, {"x": 16.5, "y": 7.25, "title": "What Really Happens When You Delete a Fi...", "category": "Education", "views": 14504043}, {"x": 16.5, "y": 6.56, "title": "Why Is Time Only Able to Move in One Dir...", "category": "Education", "views": 13379778}, {"x": 16.6, "y": 6.92, "title": "The 100 Year Mystery of Deep Sea Biolumi...", "category": "People & Blogs", "views": 7179101}, {"x": 16.7, "y": 8.84, "title": "Ranking All 12 Final Bosses From Easiest...", "category": "Gaming", "views": 18755160}, {"x": 16.7, "y": 7.84, "title": "Philosophical Perspectives on Consciousn...", "category": "Science & Technology", "views": 13891475}, {"x": 16.7, "y": 7.08, "title": "Plate Tectonics and the Formation of Sup...", "category": "People & Blogs", "views": 10721926}, {"x": 16.8, "y": 6.97, "title": "The Top 7 Most Overpowered Weapons in Mu...", "category": "Gaming", "views": 20136566}, {"x": 16.8, "y": 6.13, "title": "The 5 Worst Video Game Launch Disasters ...", "category": "Entertainment", "views": 10694000}, {"x": 16.9, "y": 8.97, "title": "Why Are Modern Video Games Taking 7 Year...", "category": "Entertainment", "views": 25175118}, {"x": 16.9, "y": 5.79, "title": "What Really Happens When You Delete a Fi...", "category": "Education", "views": 7027631}, {"x": 16.9, "y": 7.67, "title": "6 Optical Illusions That Expose Flaws in...", "category": "People & Blogs", "views": 6482804}, {"x": 16.9, "y": 8.16, "title": "Why Is Time Only Able to Move in One Dir...", "category": "People & Blogs", "views": 11385380}, {"x": 17.0, "y": 7.53, "title": "10 Mind Bending Facts About the Scale of...", "category": "Science & Technology", "views": 6453583}, {"x": 17.0, "y": 5.28, "title": "Could Life Exist in the Liquid Oceans of...", "category": "People & Blogs", "views": 14782865}, {"x": 17.0, "y": 6.78, "title": "Can Humans Ever Travel Faster Than the S...", "category": "Education", "views": 18143739}, {"x": 17.1, "y": 1.05, "title": "Why Does Nobody Write Bridge Sections in...", "category": "Music", "views": 18885663}, {"x": 17.1, "y": 4.96, "title": "Ranking the 15 Greatest Soundtracks in V...", "category": "Gaming", "views": 10847646}, {"x": 17.1, "y": 7.32, "title": "The Evolution of High Performance Solid ...", "category": "Science & Technology", "views": 12104067}, {"x": 17.2, "y": 1.07, "title": "Why Are Modern Video Games Taking 7 Year...", "category": "Gaming", "views": 22700410}, {"x": 17.3, "y": 0.9, "title": "The 5 Most Infamous Video Game Bugs Ever...", "category": "Gaming", "views": 24010805}, {"x": 17.3, "y": 8.19, "title": "Optimizing Database Query Execution Plan...", "category": "Education", "views": 17339340}, {"x": 17.4, "y": 7.36, "title": "Ranking the 15 Greatest Soundtracks in V...", "category": "Entertainment", "views": 10013651}, {"x": 17.4, "y": 10.38, "title": "How 2 Producers Created the Most Influen...", "category": "Entertainment", "views": 27606786}, {"x": 17.6, "y": 1.13, "title": "Is This Overlooked Indie Gem the Game of...", "category": "Entertainment", "views": 23967596}, {"x": 17.7, "y": 6.03, "title": "Philosophical Perspectives on Consciousn...", "category": "Education", "views": 13670552}, {"x": 17.8, "y": 4.96, "title": "Mastering Audio Compression and Dynamic ...", "category": "Entertainment", "views": 20225998}, {"x": 17.9, "y": 0.84, "title": "The Top 7 Most Overpowered Weapons in Mu...", "category": "Gaming", "views": 17775703}, {"x": 17.9, "y": 7.33, "title": "6 Optical Illusions That Expose Flaws in...", "category": "People & Blogs", "views": 17561376}, {"x": 17.9, "y": 8.23, "title": "Top 10 Tech Gadgets You Need to See in 2...", "category": "Education", "views": 5606305}, {"x": 18.0, "y": 0.89, "title": "10 Hidden Easter Eggs Developers Thought...", "category": "Gaming", "views": 24189433}, {"x": 18.1, "y": 8.35, "title": "The 3 Biggest Hardware Security Flaws Ev...", "category": "Science & Technology", "views": 11646981}, {"x": 18.2, "y": 6.8, "title": "Exploring Forgotten Beta Content and Unu...", "category": "Entertainment", "views": 7842724}, {"x": 18.2, "y": 8.03, "title": "Optimizing Database Query Execution Plan...", "category": "Education", "views": 14586371}, {"x": 18.2, "y": 1.29, "title": "The Evolution of High Performance Solid ...", "category": "Education", "views": 13797739}, {"x": 18.2, "y": 7.27, "title": "10 Mind Bending Facts About the Scale of...", "category": "Education", "views": 14954845}, {"x": 18.2, "y": 8.9, "title": "Can You Recognize These Iconic Songs Fro...", "category": "Music", "views": 42283292}, {"x": 18.3, "y": 8.11, "title": "Deep Dive Into Harmonic Modulation and C...", "category": "Entertainment", "views": 22149376}, {"x": 18.3, "y": 8.16, "title": "The Dynamic Geochemical Evolution of Ear...", "category": "People & Blogs", "views": 10894813}, {"x": 18.3, "y": 6.9, "title": "I Built an Automated Home Server for Und...", "category": "Science & Technology", "views": 5480173}, {"x": 18.5, "y": 0.92, "title": "The Complete Guide to Modern Computer Ar...", "category": "Education", "views": 13588601}, {"x": 18.5, "y": 6.16, "title": "The Complete Guide to Modern Computer Ar...", "category": "Science & Technology", "views": 5346132}, {"x": 18.6, "y": 6.6, "title": "Why Do Minor Chords Evoke Such Profound ...", "category": "Entertainment", "views": 36892054}, {"x": 18.6, "y": 6.83, "title": "Crafting Memorable Boss Encounters Throu...", "category": "Entertainment", "views": 21803956}, {"x": 18.6, "y": 7.97, "title": "What Really Happens When You Delete a Fi...", "category": "Education", "views": 8535860}, {"x": 18.9, "y": 9.19, "title": "Running 100 Isolated Virtual Machines on...", "category": "Education", "views": 19886163}, {"x": 18.9, "y": 7.42, "title": "Optimizing Database Query Execution Plan...", "category": "Education", "views": 5006700}, {"x": 18.9, "y": 8.03, "title": "Why Do Minor Chords Evoke Such Profound ...", "category": "Music", "views": 35500173}, {"x": 19.0, "y": 7.29, "title": "Plate Tectonics and the Formation of Sup...", "category": "People & Blogs", "views": 7751075}, {"x": 23.8, "y": 4.92, "title": "The Evolution of Combat Mechanics in Nar...", "category": "Entertainment", "views": 7317607}, {"x": 24.2, "y": 5.8, "title": "10 Command Line Utilities Every Software...", "category": "Education", "views": 15858491}, {"x": 25.1, "y": 5.49, "title": "How Specialized Antibodies Defend Agains...", "category": "People & Blogs", "views": 9003777}, {"x": 25.4, "y": 4.59, "title": "Top 8 Tactical Mistakes That Cause Playe...", "category": "Gaming", "views": 13770593}, {"x": 25.5, "y": 3.72, "title": "The 10 Greatest Archaeological Discoveri...", "category": "Science & Technology", "views": 14792435}, {"x": 26.0, "y": 5.81, "title": "I Survived 30 Days on an Isolated Desert...", "category": "Entertainment", "views": 12845903}, {"x": 26.9, "y": 5.26, "title": "The 4 Great Classical Philosophies That ...", "category": "Education", "views": 13404637}, {"x": 27.3, "y": 6.92, "title": "What Happens If You Reach the Maximum Le...", "category": "Entertainment", "views": 18835684}, {"x": 27.6, "y": 6.65, "title": "The Evolution of Lo-Fi Production and Ta...", "category": "Music", "views": 30063725}, {"x": 28.2, "y": 4.8, "title": "How Specialized Antibodies Defend Agains...", "category": "Science & Technology", "views": 7048523}, {"x": 28.5, "y": 4.44, "title": "The Rise and Fall of the Bronze Age Trad...", "category": "People & Blogs", "views": 6385141}, {"x": 28.8, "y": 5.04, "title": "How Did This Low Budget Track Hit 1 Bill...", "category": "Entertainment", "views": 37856846}, {"x": 29.8, "y": 6.77, "title": "The Evolution of Combat Mechanics in Nar...", "category": "Gaming", "views": 12202944}, {"x": 29.9, "y": 3.48, "title": "Top 5 World Record Speedrun Tricks That ...", "category": "Gaming", "views": 17445444}, {"x": 30.4, "y": 7.29, "title": "Clean Code Architecture and Scalable Sof...", "category": "Education", "views": 6613147}, {"x": 30.4, "y": 6.75, "title": "The Neuroscience of Decision Making and ...", "category": "Science & Technology", "views": 11596725}, {"x": 30.7, "y": 6.15, "title": "Speedrun Mechanics and Pixel Perfect Col...", "category": "Entertainment", "views": 15206277}, {"x": 31.1, "y": 5.93, "title": "Can You Actually Run Windows 11 on a Ras...", "category": "Science & Technology", "views": 7026267}, {"x": 31.3, "y": 5.6, "title": "Top 4 Mixing Mistakes That Muddle Up You...", "category": "Music", "views": 34976338}, {"x": 32.0, "y": 6.04, "title": "How Does the Human Brain Store Long-Term...", "category": "Education", "views": 4701848}, {"x": 32.3, "y": 6.27, "title": "I Tried Living Without a Smartphone for ...", "category": "Education", "views": 12238980}, {"x": 32.4, "y": 0.65, "title": "I Tested 10 Mechanical Keyboards So You ...", "category": "Education", "views": 4329582}, {"x": 32.9, "y": 7.42, "title": "The 12 Most Expensive Rare Vinyl Records...", "category": "Music", "views": 21369693}, {"x": 33.1, "y": 6.56, "title": "I Survived 30 Days on an Isolated Desert...", "category": "Gaming", "views": 13691234}, {"x": 33.4, "y": 4.35, "title": "How Did This Low Budget Track Hit 1 Bill...", "category": "Music", "views": 45515973}, {"x": 33.7, "y": 6.82, "title": "Top 4 Mixing Mistakes That Muddle Up You...", "category": "Entertainment", "views": 19961443}, {"x": 33.9, "y": 6.03, "title": "We Tested 20 Crazy Gaming Myths to See W...", "category": "Gaming", "views": 21043590}, {"x": 33.9, "y": 6.59, "title": "The Evolution of Lo-Fi Production and Ta...", "category": "Entertainment", "views": 14607311}, {"x": 34.6, "y": 5.81, "title": "The Evolution of Combat Mechanics in Nar...", "category": "Gaming", "views": 15001636}, {"x": 34.8, "y": 0.62, "title": "What Makes That Famous Drum Break So Add...", "category": "Entertainment", "views": 25798480}, {"x": 36.2, "y": 4.1, "title": "Grand Finals World Championship Extended...", "category": "Gaming", "views": 14387371}, {"x": 36.9, "y": 3.95, "title": "Deep Dive Into Modern Cloud Infrastructu...", "category": "Science & Technology", "views": 7472059}, {"x": 37.0, "y": 5.43, "title": "I Practiced Complex Jazz Drum Rudiments ...", "category": "Entertainment", "views": 30165285}, {"x": 37.7, "y": 4.9, "title": "10 Command Line Utilities Every Software...", "category": "Science & Technology", "views": 14677799}, {"x": 38.6, "y": 5.72, "title": "Top 4 Mixing Mistakes That Muddle Up You...", "category": "Music", "views": 24043741}, {"x": 38.7, "y": 6.72, "title": "Designing High Availability Systems and ...", "category": "Education", "views": 12338958}, {"x": 39.0, "y": 5.49, "title": "The Golden Era of Analog Tape Recording ...", "category": "Music", "views": 30584003}, {"x": 39.5, "y": 0.6, "title": "I Survived 30 Days on an Isolated Desert...", "category": "Entertainment", "views": 20168738}, {"x": 40.6, "y": 5.94, "title": "10 Command Line Utilities Every Software...", "category": "Education", "views": 12722010}, {"x": 41.2, "y": 6.61, "title": "Midnight Symphony Orchestra World Premie...", "category": "Music", "views": 23776941}, {"x": 41.5, "y": 6.33, "title": "The Golden Era of Analog Tape Recording ...", "category": "Entertainment", "views": 15596766}, {"x": 41.5, "y": 6.48, "title": "Top 8 Tactical Mistakes That Cause Playe...", "category": "Entertainment", "views": 19452478}, {"x": 42.2, "y": 5.39, "title": "What Makes That Famous Drum Break So Add...", "category": "Entertainment", "views": 34213467}, {"x": 43.1, "y": 6.22, "title": "How 2 Rival Inventors Revolutionized Mod...", "category": "Science & Technology", "views": 11326706}, {"x": 43.8, "y": 0.55, "title": "I Tested 10 Mechanical Keyboards So You ...", "category": "Science & Technology", "views": 12124028}, {"x": 43.9, "y": 5.85, "title": "8 Ancient Engineering Feats Historians S...", "category": "Science & Technology", "views": 12785075}, {"x": 45.1, "y": 0.64, "title": "Top 8 Browser Extensions for Maximum Pri...", "category": "Science & Technology", "views": 13054617}, {"x": 46.1, "y": 7.22, "title": "The Brilliant Psychology of Effective Le...", "category": "Entertainment", "views": 14523045}, {"x": 46.2, "y": 5.98, "title": "The 12 Most Expensive Rare Vinyl Records...", "category": "Entertainment", "views": 33173461}, {"x": 46.4, "y": 0.52, "title": "The Philosophy and Future of Open Source...", "category": "Education", "views": 9573766}, {"x": 46.8, "y": 4.94, "title": "The Architecture of Vintage Analog Recor...", "category": "Entertainment", "views": 28038903}, {"x": 47.0, "y": 0.52, "title": "Deep Dive Into Modern Cloud Infrastructu...", "category": "Science & Technology", "views": 8393492}, {"x": 47.1, "y": 6.01, "title": "Top 5 World Record Speedrun Tricks That ...", "category": "Gaming", "views": 12006346}, {"x": 47.1, "y": 0.61, "title": "Can You Actually Run Windows 11 on a Ras...", "category": "Science & Technology", "views": 14368277}, {"x": 47.3, "y": 5.22, "title": "The 4 Great Classical Philosophies That ...", "category": "People & Blogs", "views": 4750047}, {"x": 47.5, "y": 5.75, "title": "Should You Still Buy an M2 Mac?", "category": "Education", "views": 26157514}, {"x": 47.8, "y": 5.34, "title": "The Philosophy and Future of Open Source...", "category": "Science & Technology", "views": 9787654}, {"x": 48.2, "y": 5.56, "title": "The Rise and Fall of the Bronze Age Trad...", "category": "Education", "views": 12765879}, {"x": 48.7, "y": 7.57, "title": "How Did the Roman Republic Really Fall?", "category": "Science & Technology", "views": 15823428}, {"x": 51.3, "y": 5.84, "title": "Grand Finals World Championship Extended...", "category": "Entertainment", "views": 11494417}, {"x": 51.5, "y": 4.09, "title": "The Neuroscience of Decision Making and ...", "category": "Science & Technology", "views": 12707297}, {"x": 51.8, "y": 6.07, "title": "Midnight Symphony Orchestra World Premie...", "category": "Entertainment", "views": 20914411}, {"x": 51.9, "y": 7.43, "title": "The Brilliant Psychology of Effective Le...", "category": "Gaming", "views": 17524349}, {"x": 52.4, "y": 0.71, "title": "What Makes That Famous Drum Break So Add...", "category": "Music", "views": 16319028}, {"x": 53.4, "y": 6.14, "title": "Can You Actually Run Windows 11 on a Ras...", "category": "Science & Technology", "views": 7547027}, {"x": 53.6, "y": 5.07, "title": "Designing High Availability Systems and ...", "category": "Education", "views": 14636213}, {"x": 53.9, "y": 5.4, "title": "The 12 Most Expensive Rare Vinyl Records...", "category": "Music", "views": 35421633}, {"x": 54.0, "y": 5.79, "title": "Designing High Availability Systems and ...", "category": "Education", "views": 9546514}, {"x": 54.5, "y": 5.33, "title": "Can an AI Outplay the Best Esports Champ...", "category": "Gaming", "views": 10834702}, {"x": 54.5, "y": 4.75, "title": "Speedrun Mechanics and Pixel Perfect Col...", "category": "Gaming", "views": 15368036}, {"x": 54.8, "y": 4.61, "title": "I Tried Living Without a Smartphone for ...", "category": "Science & Technology", "views": 16129382}, {"x": 56.8, "y": 6.6, "title": "The 10 Greatest Archaeological Discoveri...", "category": "Science & Technology", "views": 4828256}, {"x": 56.9, "y": 5.67, "title": "The 4 Great Classical Philosophies That ...", "category": "People & Blogs", "views": 14282305}, {"x": 58.3, "y": 5.29, "title": "The Rise and Fall of the Bronze Age Trad...", "category": "People & Blogs", "views": 6160499}, {"x": 59.2, "y": 0.75, "title": "The Neuroscience of Decision Making and ...", "category": "People & Blogs", "views": 8749355}, {"x": 59.3, "y": 4.8, "title": "We Tested 20 Crazy Gaming Myths to See W...", "category": "Entertainment", "views": 19872190}, {"x": 59.5, "y": 6.34, "title": "How Did the Roman Republic Really Fall?", "category": "People & Blogs", "views": 8727590}, {"x": 59.8, "y": 8.04, "title": "Can an AI Outplay the Best Esports Champ...", "category": "Entertainment", "views": 7990835}, {"x": 59.8, "y": 3.59, "title": "Top 8 Browser Extensions for Maximum Pri...", "category": "Science & Technology", "views": 6576462}, {"x": 60.9, "y": 5.11, "title": "Clean Code Architecture and Scalable Sof...", "category": "Education", "views": 3847876}, {"x": 61.8, "y": 4.65, "title": "Clean Code Architecture and Scalable Sof...", "category": "Education", "views": 8667012}, {"x": 62.0, "y": 6.07, "title": "8 Ancient Engineering Feats Historians S...", "category": "Education", "views": 5915027}, {"x": 62.2, "y": 5.79, "title": "Should You Still Buy an M2 Mac?", "category": "Education", "views": 25749251}, {"x": 62.3, "y": 5.95, "title": "Midnight Symphony Orchestra World Premie...", "category": "Entertainment", "views": 27577897}, {"x": 62.6, "y": 4.5, "title": "What Happens If You Reach the Maximum Le...", "category": "Gaming", "views": 17555575}, {"x": 62.8, "y": 5.57, "title": "The Philosophy and Future of Open Source...", "category": "Education", "views": 11609574}, {"x": 63.3, "y": 6.72, "title": "The Architecture of Vintage Analog Recor...", "category": "Entertainment", "views": 30114777}, {"x": 65.8, "y": 6.32, "title": "I Tested 10 Mechanical Keyboards So You ...", "category": "Science & Technology", "views": 6243792}, {"x": 66.3, "y": 0.83, "title": "The Brilliant Psychology of Effective Le...", "category": "Entertainment", "views": 9308158}, {"x": 66.3, "y": 5.48, "title": "Deep Dive Into Modern Cloud Infrastructu...", "category": "Science & Technology", "views": 13816127}, {"x": 66.6, "y": 6.1, "title": "How Does the Human Brain Store Long-Term...", "category": "People & Blogs", "views": 13809764}, {"x": 67.0, "y": 7.12, "title": "Top 8 Tactical Mistakes That Cause Playe...", "category": "Entertainment", "views": 14812188}, {"x": 67.5, "y": 4.85, "title": "Understanding Gravitational Waves and Sp...", "category": "Science & Technology", "views": 7675503}, {"x": 67.5, "y": 7.32, "title": "What Happens If You Reach the Maximum Le...", "category": "Gaming", "views": 23050770}, {"x": 68.2, "y": 3.89, "title": "How 2 Rival Inventors Revolutionized Mod...", "category": "Science & Technology", "views": 11753791}, {"x": 68.3, "y": 7.45, "title": "Can an AI Outplay the Best Esports Champ...", "category": "Entertainment", "views": 20063690}, {"x": 68.4, "y": 5.78, "title": "5 Universal Chord Progressions Found in ...", "category": "Entertainment", "views": 24093583}, {"x": 68.7, "y": 4.42, "title": "How Did the Roman Republic Really Fall?", "category": "People & Blogs", "views": 7697221}, {"x": 69.3, "y": 0.74, "title": "5 Universal Chord Progressions Found in ...", "category": "Music", "views": 36143506}, {"x": 69.8, "y": 5.89, "title": "Top 8 Browser Extensions for Maximum Pri...", "category": "Science & Technology", "views": 8658466}, {"x": 71.5, "y": 4.91, "title": "The Evolution of Lo-Fi Production and Ta...", "category": "Music", "views": 20130048}, {"x": 71.8, "y": 4.84, "title": "Top 5 World Record Speedrun Tricks That ...", "category": "Entertainment", "views": 14117472}, {"x": 72.7, "y": 3.85, "title": "5 Universal Chord Progressions Found in ...", "category": "Music", "views": 20011299}, {"x": 73.0, "y": 5.36, "title": "How Did This Low Budget Track Hit 1 Bill...", "category": "Entertainment", "views": 45948106}, {"x": 73.3, "y": 6.03, "title": "Speedrun Mechanics and Pixel Perfect Col...", "category": "Entertainment", "views": 6076568}, {"x": 73.6, "y": 5.41, "title": "Understanding Gravitational Waves and Sp...", "category": "Science & Technology", "views": 12933439}, {"x": 73.8, "y": 0.68, "title": "How Does the Human Brain Store Long-Term...", "category": "Education", "views": 5553142}, {"x": 73.8, "y": 0.83, "title": "Grand Finals World Championship Extended...", "category": "Gaming", "views": 18702625}, {"x": 73.9, "y": 5.01, "title": "The Golden Era of Analog Tape Recording ...", "category": "Entertainment", "views": 19695204}, {"x": 75.1, "y": 5.41, "title": "8 Ancient Engineering Feats Historians S...", "category": "People & Blogs", "views": 12114799}, {"x": 75.5, "y": 2.88, "title": "Understanding Gravitational Waves and Sp...", "category": "Education", "views": 7595657}, {"x": 75.9, "y": 4.35, "title": "I Practiced Complex Jazz Drum Rudiments ...", "category": "Entertainment", "views": 28112606}, {"x": 75.9, "y": 0.69, "title": "How 2 Rival Inventors Revolutionized Mod...", "category": "Science & Technology", "views": 7557381}, {"x": 76.0, "y": 0.73, "title": "We Tested 20 Crazy Gaming Myths to See W...", "category": "Entertainment", "views": 19423499}, {"x": 78.1, "y": 5.81, "title": "The Architecture of Vintage Analog Recor...", "category": "Music", "views": 30180297}, {"x": 78.4, "y": 4.97, "title": "How Specialized Antibodies Defend Agains...", "category": "Science & Technology", "views": 11222643}], "title_analysis": {"numbers": {"labels": ["Has Number", "No Number"], "avg_views": [16242797, 17064726], "counts": [218, 260]}, "questions": {"labels": ["Has Question (?)", "No Question"], "avg_views": [20401417, 15459582], "counts": [119, 359]}}};
+
+    // Formatters
+    const fmtCompact = (num) => {
+      if (num === 0) return '0';
+      if (Math.abs(num) >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+      if (Math.abs(num) >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+      if (Math.abs(num) >= 1e3) return (num / 1e3).toFixed(0) + 'K';
+      return num.toLocaleString();
+    };
+
+    // Populate KPIs
+    document.getElementById('kpi-videos').textContent = DATA.kpis.total_videos.toLocaleString();
+    document.getElementById('kpi-views').textContent = fmtCompact(DATA.kpis.total_views);
+    document.getElementById('kpi-channels').textContent = DATA.kpis.total_channels;
+    document.getElementById('kpi-engagement').textContent = DATA.kpis.avg_engagement_rate.toFixed(2) + '%';
+
+    // Chart Global Defaults
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.plugins.tooltip.backgroundColor = '#1e293b';
+    Chart.defaults.plugins.tooltip.titleColor = '#f8fafc';
+    Chart.defaults.plugins.tooltip.bodyColor = '#e2e8f0';
+    Chart.defaults.plugins.tooltip.borderColor = '#334155';
+    Chart.defaults.plugins.tooltip.borderWidth = 1;
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.cornerRadius = 8;
+
+    const gridStyle = {
+      color: 'rgba(255, 255, 255, 0.05)',
+      drawBorder: false,
+    };
+
+    // ── Chart 1: Subscriber Growth (Line Chart) ──────────────────────────────
+    const palette = [
+      '#38bdf8', '#818cf8', '#c084fc', '#f472b6',
+      '#fb7185', '#fbbf24', '#34d399', '#2dd4bf',
+      '#a78bfa', '#60a5fa', '#4ade80', '#f87171'
+    ];
+
+    const growthCtx = document.getElementById('chart-growth').getContext('2d');
+    new Chart(growthCtx, {
+      type: 'line',
+      data: {
+        labels: DATA.subscriber_trends.labels.map(d => d.slice(5)), // MM-DD
+        datasets: DATA.subscriber_trends.channels.map((ch, idx) => ({
+          label: ch.name,
+          data: ch.values,
+          borderColor: palette[idx % palette.length],
+          backgroundColor: palette[idx % palette.length],
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          tension: 0.25,
+          fill: false,
+        }))
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'nearest', intersect: false },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { boxWidth: 12, padding: 12, usePointStyle: true }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: +${ctx.parsed.y !== null ? ctx.parsed.y.toLocaleString() : '0'} net subs`
+            }
+          }
+        },
+        scales: {
+          x: { grid: gridStyle, title: { display: true, text: 'Snapshot Date (Month-Day)' } },
+          y: {
+            grid: gridStyle,
+            title: { display: true, text: 'Net New Subscribers Since Day 1' },
+            ticks: { callback: (v) => fmtCompact(v) }
+          }
+        }
+      }
+    });
+
+    // ── Chart 2: Category Views (Bar Chart) ──────────────────────────────────
+    const catCtx = document.getElementById('chart-category').getContext('2d');
+    new Chart(catCtx, {
+      type: 'bar',
+      data: {
+        labels: DATA.category_stats.labels,
+        datasets: [{
+          label: 'Average Views',
+          data: DATA.category_stats.avg_views,
+          backgroundColor: [
+            '#38bdf8', '#818cf8', '#c084fc', '#34d399', '#fbbf24', '#fb7185'
+          ],
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `Avg Views: ${ctx.parsed.y.toLocaleString()}`
+            }
+          }
+        },
+        scales: {
+          x: { grid: gridStyle, title: { display: true, text: 'Video Category' } },
+          y: {
+            grid: gridStyle,
+            title: { display: true, text: 'Average Views per Video' },
+            ticks: { callback: (v) => fmtCompact(v) }
+          }
+        }
+      }
+    });
+
+    // ── Chart 3: Duration vs Engagement (Scatter Plot) ───────────────────────
+    const scatterCtx = document.getElementById('chart-scatter').getContext('2d');
+    new Chart(scatterCtx, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Videos',
+          data: DATA.scatter_data,
+          backgroundColor: 'rgba(56, 189, 248, 0.65)',
+          borderColor: '#38bdf8',
+          borderWidth: 1,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => [
+                `Title: ${ctx.raw.title}`,
+                `Category: ${ctx.raw.category}`,
+                `Duration: ${ctx.parsed.x} min`,
+                `Engagement: ${ctx.parsed.y.toFixed(2)}%`,
+                `Views: ${ctx.raw.views.toLocaleString()}`
+              ]
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: gridStyle,
+            title: { display: true, text: 'Duration (Minutes)' }
+          },
+          y: {
+            grid: gridStyle,
+            title: { display: true, text: 'Engagement Rate (%)' },
+            ticks: { callback: (v) => v + '%' }
+          }
+        }
+      }
+    });
+
+    // ── Chart 4: Title Features (Bar Chart) ──────────────────────────────────
+    const titleCtx = document.getElementById('chart-titles').getContext('2d');
+    
+    // Combine Number and Question analysis
+    const titleLabels = ['Has Number in Title', 'No Number in Title', 'Has Question (?)', 'No Question in Title'];
+    
+    // Find views for each variant
+    const numIdxHas = DATA.title_analysis.numbers.labels.indexOf('Has Number');
+    const numIdxNo = DATA.title_analysis.numbers.labels.indexOf('No Number');
+    const qIdxHas = DATA.title_analysis.questions.labels.indexOf('Has Question (?)');
+    const qIdxNo = DATA.title_analysis.questions.labels.indexOf('No Question');
+
+    const titleViews = [
+      numIdxHas >= 0 ? DATA.title_analysis.numbers.avg_views[numIdxHas] : 0,
+      numIdxNo >= 0 ? DATA.title_analysis.numbers.avg_views[numIdxNo] : 0,
+      qIdxHas >= 0 ? DATA.title_analysis.questions.avg_views[qIdxHas] : 0,
+      qIdxNo >= 0 ? DATA.title_analysis.questions.avg_views[qIdxNo] : 0,
+    ];
+
+    const titleCounts = [
+      numIdxHas >= 0 ? DATA.title_analysis.numbers.counts[numIdxHas] : 0,
+      numIdxNo >= 0 ? DATA.title_analysis.numbers.counts[numIdxNo] : 0,
+      qIdxHas >= 0 ? DATA.title_analysis.questions.counts[qIdxHas] : 0,
+      qIdxNo >= 0 ? DATA.title_analysis.questions.counts[qIdxNo] : 0,
+    ];
+
+    new Chart(titleCtx, {
+      type: 'bar',
+      data: {
+        labels: titleLabels,
+        datasets: [{
+          label: 'Average Views',
+          data: titleViews,
+          backgroundColor: [
+            '#818cf8', '#6366f1',
+            '#34d399', '#059669'
+          ],
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => [
+                `Avg Views: ${ctx.parsed.y.toLocaleString()}`,
+                `Video Count: ${titleCounts[ctx.dataIndex].toLocaleString()} videos`
+              ]
+            }
+          }
+        },
+        scales: {
+          x: { grid: gridStyle, title: { display: true, text: 'Title Syntax Pattern' } },
+          y: {
+            grid: gridStyle,
+            title: { display: true, text: 'Average Views' },
+            ticks: { callback: (v) => fmtCompact(v) }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

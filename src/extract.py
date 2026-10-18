@@ -121,23 +121,16 @@ def _latest_raw_files() -> dict[str, Path]:
 def extract_sample() -> dict[str, dict]:
     """
     Load the latest sample raw files and return them as in-memory dicts.
-    Also copies them under today's date if today's file doesn't already exist.
+    In sample mode, the snapshot files in raw/ are already self-contained;
+    we do not create an extra today-dated copy so the snapshot count stays at exactly 7.
     """
     files  = _latest_raw_files()
-    today  = _today_str()
     result = {}
 
     for resource_type, src_path in files.items():
         with src_path.open(encoding="utf-8") as fh:
             data = json.load(fh)
         result[resource_type] = data
-
-        # Write a today-dated copy so stage.py always finds a fresh file
-        dest = RAW_DIR / f"{resource_type}_{today}.json"
-        if not dest.exists():
-            _write_raw(resource_type, data, today)
-        else:
-            log.info("Today's file already exists: %s – skipping copy", dest.name)
 
     return result
 
